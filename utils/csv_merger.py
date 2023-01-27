@@ -1,18 +1,14 @@
 import shutil
 import glob
 
+def merge_csv_files(path,pattern='*.tsv',result_file_name='merged.tsv'):
+    allFiles = glob.glob(path + pattern)
+    allFiles.sort()
+    print(f"Merging files: {allFiles}")
+    with open(f"{path}{result_file_name}", 'wb') as outfile:
+        for i, fname in enumerate(allFiles):
+            with open(fname, 'rb') as infile:
+                if i != 0:
+                    infile.readline()  # Throw away header on all but first file
+                shutil.copyfileobj(infile, outfile)
 
-#import csv files from folder
-
-path = r"C:/Users/micha/Desktop/NLP_BERT_Multilingual/data/3-languages/"
-allFiles = glob.glob(path + "*train*.tsv")
-allFiles.sort()  # glob lacks reliable ordering, so impose your own if output order matters
-print(allFiles)
-with open('train-3languages.tsv', 'wb') as outfile:
-    for i, fname in enumerate(allFiles):
-        with open(fname, 'rb') as infile:
-            if i != 0:
-                infile.readline()  # Throw away header on all but first file
-            # Block copy rest of file from input to output without parsing
-            shutil.copyfileobj(infile, outfile)
-            print(fname + " has been imported.")
