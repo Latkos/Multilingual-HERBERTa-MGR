@@ -1,0 +1,7 @@
+.idea
+.vscode
+venv
+local_testing
+data
+training_output
+wandb
