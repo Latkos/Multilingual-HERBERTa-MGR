@@ -35,7 +35,7 @@ def create_tokens_and_labels(text):
 
 def get_labels(df):
     df['tokens'],df['labels']=zip(*df['text'].map(create_tokens_and_labels))
-    return df.head(5)
+    return df
 
 
 
