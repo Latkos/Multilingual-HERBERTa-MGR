@@ -30,7 +30,9 @@ class RelationsModel:
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
-    def train(self, train_df, model_path, training_arguments, split=0.2):
+    def train(self, train_df, model_path, training_arguments=None, split=0.2):
+        if training_arguments is None:
+            training_arguments = {}
         df = pd.read_csv(train_df, sep="\t")
         train_texts, train_labels = get_texts_and_labels(df, model_path)
         train_texts, val_texts, train_labels, val_labels = train_test_split(
