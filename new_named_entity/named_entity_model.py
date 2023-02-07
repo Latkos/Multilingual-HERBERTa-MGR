@@ -4,11 +4,12 @@ import nltk
 import numpy as np
 from datasets import load_metric, Dataset
 from transformers import DataCollatorForTokenClassification, AutoTokenizer, TrainingArguments, \
-    AutoModelForTokenClassification, Trainer
+    AutoModelForTokenClassification, Trainer, pipeline, BertForTokenClassification
 
 from ner.training import compute_metrics
 from new_named_entity import ner_config
-from new_named_entity.named_entity_utility_functions import split_dataset, create_dataset_from_dataframe
+from new_named_entity.named_entity_utility_functions import split_dataset, create_dataset_from_dataframe, \
+    get_model_output_as_sentence
 
 
 class NamedEntityModel:
@@ -53,8 +54,25 @@ class NamedEntityModel:
     def evaluate_model(self,test_df, model_path=None):
         pass
 
-    def predict(self, text, model_path=None):
-        pass
+    def predict(self, sentences, model_path=None):
+        model = BertForTokenClassification.from_pretrained(
+            model_path, num_labels=len(ner_config.label_names)
+        )
+        tokenizer=self.tokenizer
+        token_classifier = pipeline(
+            "token-classification",
+            model=model,
+            tokenizer=tokenizer,
+            aggregation_strategy="simple",
+        )
+        groups = token_classifier(sentences)
+        result = []
+        if isinstance(groups[0], dict):
+            result.append(get_model_output_as_sentence(groups))
+        else:
+            for i in groups:
+                result.append(get_model_output_as_sentence(i))
+        return result
 
     def tokenize_adjust_labels(self, all_samples_per_split):
         tokenized_samples = self.tokenizer.batch_encode_plus(all_samples_per_split["tokens"], is_split_into_words=True)

@@ -78,3 +78,6 @@ def compute_metrics(p):
         if k not in flattened_results.keys():
             flattened_results[k + "_f1"] = results[k]["f1"]
     return flattened_results
+
+def get_model_output_as_sentence(model_output):
+    pass
