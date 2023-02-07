@@ -13,17 +13,17 @@ from new_named_entity.named_entity_utility_functions import split_dataset, creat
 
 
 class NamedEntityModel:
-    def __init__(self, model_path="./", model_name="ner",model_type='bert-base-multilingual-cased'):
+    def __init__(self, model_path="./", model_name="ner", model_type='bert-base-multilingual-cased'):
         self.model_path = model_path
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(model_type)
-
+        self.last_trainer = None
 
     def train(self, train_df, training_arguments=None, split=0.2):
-        ds=create_dataset_from_dataframe(train_df)
+        ds = create_dataset_from_dataframe(train_df)
         ds = ds.map(self.tokenize_adjust_labels, batched=True)
-        ds=ds.remove_columns(column_names=['id','entity_1','entity_2','label','text','lang'])
-        train_ds,val_ds=split_dataset(ds,split)
+        ds = ds.remove_columns(column_names=['id', 'entity_1', 'entity_2', 'label', 'text', 'lang'])
+        train_ds, val_ds = split_dataset(ds, split)
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
         model = AutoModelForTokenClassification.from_pretrained("bert-base-multilingual-cased",
                                                                 num_labels=len(ner_config.label_mapping)).to("cuda:0")
@@ -50,15 +50,21 @@ class NamedEntityModel:
         )
         trainer.train()
         trainer.save_model(self.model_name)
+        self.last_trainer = trainer
 
-    def evaluate_model(self,test_df, model_path=None):
-        pass
+    def evaluate_model(self, test_df, trainer=None):
+        if trainer is None:
+            trainer = self.last_trainer
+        test_ds = create_dataset_from_dataframe(test_df)
+        result = trainer.evaluate(test_ds)
+        print("EVALUATION RESULT: ", result)
+        return result
 
     def predict(self, sentences, model_path=None):
         model = BertForTokenClassification.from_pretrained(
             model_path, num_labels=len(ner_config.label_names)
         )
-        tokenizer=self.tokenizer
+        tokenizer = self.tokenizer
         token_classifier = pipeline(
             "token-classification",
             model=model,
@@ -95,4 +101,3 @@ class NamedEntityModel:
             total_adjusted_labels.append(adjusted_label_ids)
         tokenized_samples["labels"] = total_adjusted_labels
         return tokenized_samples
-
