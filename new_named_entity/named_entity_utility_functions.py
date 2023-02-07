@@ -1,24 +1,20 @@
-import json
-import os
-
 import nltk
-from datasets import Dataset
-from seqeval.metrics import accuracy_score
-from sklearn.metrics import precision_recall_fscore_support
-from transformers import AutoTokenizer
-
+from datasets import Dataset, load_metric
+import numpy as np
 from new_named_entity import ner_config
 
 
 def create_dataset_from_dataframe(df):
-    df=preprocess_dataframe(df, ner_config.label_mapping)
-    dataset=Dataset.from_pandas(df)
+    df = preprocess_dataframe(df, ner_config.label_mapping)
+    dataset = Dataset.from_pandas(df)
     return dataset
+
 
 def preprocess_dataframe(df, label_mapping):
     df['tokens'], df['labels'] = zip(*df['text'].map(create_tokens_and_labels_for_two_entities))
     df['ner_tags'] = df['labels'].apply(lambda x: [label_mapping[i] for i in x])
     return df
+
 
 def extract_tokens_and_create_labels(tokens, special_elements):
     new_tokens = [token for token in tokens if token not in special_elements]
@@ -46,7 +42,7 @@ def create_tokens_and_labels_for_two_entities(text):
         text = text.replace(word, replacement)
     text_tokens = nltk.word_tokenize(text)
     # TODO unhardcode this
-    special_elements = ['StartEntity1','StopEntity1','StartEntity2','StopEntity2']
+    special_elements = ['StartEntity1', 'StopEntity1', 'StartEntity2', 'StopEntity2']
     tokens, labels = extract_tokens_and_create_labels(text_tokens, special_elements)
     return tokens, labels
 
@@ -56,3 +52,29 @@ def split_dataset(ds, split=0.2):
     train = split_ds["train"]
     val = split_ds["test"]
     return train, val
+
+
+def compute_metrics(p):
+    metric = load_metric('seqeval')
+    predictions, labels = p
+    predictions = np.argmax(predictions, axis=2)
+    # Remove ignored index (special tokens)
+    true_predictions = [
+        [ner_config.label_names[p] for (p, l) in zip(prediction, label) if l != -100]
+        for prediction, label in zip(predictions, labels)
+    ]
+    true_labels = [
+        [ner_config.label_names[l] for (p, l) in zip(prediction, label) if l != -100]
+        for prediction, label in zip(predictions, labels)
+    ]
+    results = metric.compute(predictions=true_predictions, references=true_labels)
+    flattened_results = {
+        "overall_precision": results["overall_precision"],
+        "overall_recall": results["overall_recall"],
+        "overall_f1": results["overall_f1"],
+        "overall_accuracy": results["overall_accuracy"],
+    }
+    for k in results.keys():
+        if k not in flattened_results.keys():
+            flattened_results[k + "_f1"] = results[k]["f1"]
+    return flattened_results
