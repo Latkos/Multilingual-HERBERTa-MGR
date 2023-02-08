@@ -1,7 +1,11 @@
 import json
 import os
+
+import numpy as np
+from datasets import load_metric
 from seqeval.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
+import evaluate
 
 def get_texts_and_labels(df, model_path):
     texts = df["text"].tolist()
@@ -33,11 +37,13 @@ def map_result_to_text(result, model_path):
     result = [map[str(label)] for label in result]
     return result
 
-def calculate_metrics(test_labels, predicted_test_labels):
+def calculate_metrics(labels, predictions):
+    print(f"PREDICTIONS: {predictions}")
+    print(f"LABELS: {labels}")
     precision, recall, f1, _= precision_recall_fscore_support(
-        test_labels, predicted_test_labels, average=None
+        labels, predictions, average='weighted'
     )
-    accuracy = accuracy_score(test_labels, predicted_test_labels)
+    accuracy = accuracy_score(labels, predictions)
     print("PRECISION: %.2f" % precision)
     print("RECALL: %.2f" % recall)
     print("F1 SCORE: %.2f" % f1)
