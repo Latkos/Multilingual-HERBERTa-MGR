@@ -1,3 +1,4 @@
+import torch
 from tokenizers.trainers import Trainer
 from relations.relations_dataset import RelationsDataset
 from relations.relations_utility_functions import (
@@ -42,11 +43,11 @@ class RelationsModel:
             output_dir="./re/result1",
             evaluation_strategy="steps",
             learning_rate=2e-5,
-            per_device_train_batch_size=16,
-            per_device_eval_batch_size=16,
+            per_device_train_batch_size=4,
+            per_device_eval_batch_size=4,
             num_train_epochs=7,
             weight_decay=0.01,
-            logging_steps=1000,
+            logging_steps=10000,
             run_name="first_run",
             save_strategy="no",
         )
@@ -60,6 +61,7 @@ class RelationsModel:
             train_dataset=train_dataset,
             eval_dataset=val_dataset,
         )
+        torch.cuda.empty_cache()
         trainer.train()
         trainer.save_model(model_path)
         self.last_trainer = trainer
