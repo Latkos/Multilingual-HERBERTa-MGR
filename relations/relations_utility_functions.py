@@ -7,10 +7,13 @@ from seqeval.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
 import evaluate
 
+
 def get_texts_and_labels(df, model_path):
     texts = df["text"].tolist()
     labels = df["label"].tolist()
-    map = dict([(y, x) for x, y in enumerate(sorted(set(labels)))]) # get a dict of distinct labels and their numbers
+    map = dict(
+        [(y, x) for x, y in enumerate(sorted(set(labels)))]
+    )  # get a dict of distinct labels and their numbers
     labels = [map[x] for x in labels]
     map_path = f"{model_path}/map.json"
     inverted_map = {v: k for k, v in map.items()}
@@ -37,11 +40,12 @@ def map_result_to_text(result, model_path):
     result = [map[str(label)] for label in result]
     return result
 
-def calculate_metrics(labels, predictions):
+
+def calculate_metrics(labels, predictions, average_type="weighted"):
     print(f"PREDICTIONS: {predictions}")
     print(f"LABELS: {labels}")
-    precision, recall, f1, _= precision_recall_fscore_support(
-        labels, predictions, average='weighted'
+    precision, recall, f1, _ = precision_recall_fscore_support(
+        labels, predictions, average=average_type
     )
     accuracy = accuracy_score(labels, predictions)
     print("PRECISION: %.2f" % precision)
@@ -49,4 +53,3 @@ def calculate_metrics(labels, predictions):
     print("F1 SCORE: %.2f" % f1)
     print("ACCURACY: %.2f" % accuracy)
     return precision, recall, f1, accuracy
-

@@ -1,2 +1,2 @@
-label_mapping = {"O": 0, 'B-Entity1': 1, 'I-Entity1': 2, 'B-Entity2': 3, 'I-Entity2': 4}
-label_names=list(label_mapping.keys())
+label_mapping = {"O": 0, "B-Entity1": 1, "I-Entity1": 2, "B-Entity2": 3, "I-Entity2": 4}
+label_names = list(label_mapping.keys())
