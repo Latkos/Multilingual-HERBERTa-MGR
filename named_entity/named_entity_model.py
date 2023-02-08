@@ -1,14 +1,8 @@
-import sys
-
-import nltk
-import numpy as np
-from datasets import load_metric, Dataset
 from transformers import DataCollatorForTokenClassification, AutoTokenizer, TrainingArguments, \
     AutoModelForTokenClassification, Trainer, pipeline, BertForTokenClassification
 
-from ner.prediction import get_entities_sentence
-from new_named_entity import ner_config
-from new_named_entity.named_entity_utility_functions import split_dataset, create_dataset_from_dataframe, \
+from named_entity import ner_config
+from named_entity.named_entity_utility_functions import split_dataset, create_dataset_from_dataframe, \
     get_model_output_as_sentence, compute_metrics
 
 
@@ -79,12 +73,6 @@ class NamedEntityModel:
         groups = token_classifier(sentences)
         print("GROUPS",groups)
         result = []
-        # if isinstance(groups[0], dict):
-        #     result.append(get_model_output_as_sentence(groups))
-        # else:
-        #     for i in groups:
-        #         result.append(get_model_output_as_sentence(i))
-
         if isinstance(groups[0], dict):
             result.append(get_model_output_as_sentence(groups))
         else:

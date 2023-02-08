@@ -1,7 +1,7 @@
 import nltk
 from datasets import Dataset, load_metric
 import numpy as np
-from new_named_entity import ner_config
+from named_entity import ner_config
 
 
 def create_dataset_from_dataframe(df):

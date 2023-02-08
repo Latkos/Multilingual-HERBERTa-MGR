@@ -13,16 +13,6 @@ from transformers import (
     pipeline,
 )
 
-from old_relations.helper_functions_relations import (
-    get_texts_and_labels,
-    prune_prefixes_from_labels,
-    calculate_metrics,
-    map_result_to_text,
-)
-
-from old_relations.relations_dataset import RelationsDataset
-
-
 
 class RelationsModel:
     def __init__(self, model_path, model_name="bert-base-multilingual-cased"):
@@ -30,11 +20,12 @@ class RelationsModel:
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
-    def train(self, train_df, model_path, training_arguments=None, split=0.2):
+    def train(self, train_df, model_path=None, training_arguments=None, split=0.2):
+        if model_path is None:
+            model_path=self.model_path
         if training_arguments is None:
             training_arguments = {}
-        df = pd.read_csv(train_df, sep="\t")
-        train_texts, train_labels = get_texts_and_labels(df, model_path)
+        train_texts, train_labels = get_texts_and_labels(train_df, model_path)
         train_texts, val_texts, train_labels, val_labels = train_test_split(
             train_texts, train_labels, test_size=split
         )
@@ -44,7 +35,18 @@ class RelationsModel:
         train_dataset = RelationsDataset(train_encodings, train_labels)
         val_dataset = RelationsDataset(val_encodings, val_labels)
         not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
-        training_args = TrainingArguments(**not_none_params)
+        training_args = TrainingArguments(
+            output_dir="./re/result1",
+            evaluation_strategy="steps",
+            learning_rate=2e-5,
+            per_device_train_batch_size=16,
+            per_device_eval_batch_size=16,
+            num_train_epochs=7,
+            weight_decay=0.01,
+            logging_steps=1000,
+            run_name="first_run",
+            save_strategy='no'
+        )
         labels_number = len(set(train_labels))
         model = BertForSequenceClassification.from_pretrained(
             "bert-base-multilingual-cased", num_labels=labels_number
