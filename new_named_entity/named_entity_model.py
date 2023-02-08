@@ -6,23 +6,27 @@ from datasets import load_metric, Dataset
 from transformers import DataCollatorForTokenClassification, AutoTokenizer, TrainingArguments, \
     AutoModelForTokenClassification, Trainer, pipeline, BertForTokenClassification
 
-from ner.training import compute_metrics
+from ner.prediction import get_entities_sentence
 from new_named_entity import ner_config
 from new_named_entity.named_entity_utility_functions import split_dataset, create_dataset_from_dataframe, \
-    get_model_output_as_sentence
+    get_model_output_as_sentence, compute_metrics
 
 
 class NamedEntityModel:
-    def __init__(self, model_path="./", model_name="ner", model_type='bert-base-multilingual-cased'):
+    def __init__(self, model_path="./", model_name="ner/results", model_type='bert-base-multilingual-cased'):
         self.model_path = model_path
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(model_type)
         self.last_trainer = None
 
-    def train(self, train_df, training_arguments=None, split=0.2):
-        ds = create_dataset_from_dataframe(train_df)
+    def preprocess_data(self,df):
+        ds = create_dataset_from_dataframe(df)
         ds = ds.map(self.tokenize_adjust_labels, batched=True)
         ds = ds.remove_columns(column_names=['id', 'entity_1', 'entity_2', 'label', 'text', 'lang'])
+        return ds
+
+    def train(self, train_df, training_arguments=None, split=0.2):
+        ds=self.preprocess_data(train_df)
         train_ds, val_ds = split_dataset(ds, split)
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
         model = AutoModelForTokenClassification.from_pretrained("bert-base-multilingual-cased",
@@ -52,15 +56,16 @@ class NamedEntityModel:
         trainer.save_model(self.model_name)
         self.last_trainer = trainer
 
-    def evaluate_model(self, test_df, trainer=None):
+    def evaluate(self, test_df, trainer=None):
         if trainer is None:
             trainer = self.last_trainer
-        test_ds = create_dataset_from_dataframe(test_df)
+
+        test_ds = self.preprocess_data(test_df)
         result = trainer.evaluate(test_ds)
         print("EVALUATION RESULT: ", result)
         return result
 
-    def predict(self, sentences, model_path=None):
+    def predict(self, sentences, model_path):
         model = BertForTokenClassification.from_pretrained(
             model_path, num_labels=len(ner_config.label_names)
         )
@@ -72,12 +77,20 @@ class NamedEntityModel:
             aggregation_strategy="simple",
         )
         groups = token_classifier(sentences)
+        print("GROUPS",groups)
         result = []
+        # if isinstance(groups[0], dict):
+        #     result.append(get_model_output_as_sentence(groups))
+        # else:
+        #     for i in groups:
+        #         result.append(get_model_output_as_sentence(i))
+
         if isinstance(groups[0], dict):
             result.append(get_model_output_as_sentence(groups))
         else:
             for i in groups:
                 result.append(get_model_output_as_sentence(i))
+
         return result
 
     def tokenize_adjust_labels(self, all_samples_per_split):

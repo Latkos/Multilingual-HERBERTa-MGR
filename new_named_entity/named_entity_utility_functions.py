@@ -79,5 +79,27 @@ def compute_metrics(p):
             flattened_results[k + "_f1"] = results[k]["f1"]
     return flattened_results
 
-def get_model_output_as_sentence(model_output):
-    pass
+
+
+def get_model_output_as_sentence(ner_output):
+    entity_1=""
+    entity_2=""
+    text = ''
+    for item in ner_output:
+        if item['entity_group']=='LABEL_1':
+            entity_1+=item['word']
+        if item['entity_group'] == 'LABEL_2':
+            text+=' '
+            entity_1+=' '
+            entity_1+=item['word']
+        if item['entity_group'] == 'LABEL_3':
+            entity_2+=item['word']
+        if item['entity_group'] == 'LABEL_4':
+            text+=' '
+            entity_2=' '
+            entity_2+=item['word']
+        text+=item['word']
+    text = text.replace(entity_1, ' <e1> ' + entity_1 + ' </e1> ')
+    text = text.replace(entity_2, ' <e2> ' + entity_2 + ' </e2> ')
+    result= [{'ENTITY_1': entity_1, 'ENTITY_2': entity_2, 'TEXT': text}]
+    return result
