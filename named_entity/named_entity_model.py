@@ -8,6 +8,7 @@ from transformers import (
     BertForTokenClassification,
 )
 
+from base_model.base_model import BaseModel
 from named_entity import ner_config
 from named_entity.named_entity_utility_functions import (
     split_dataset,
@@ -17,7 +18,7 @@ from named_entity.named_entity_utility_functions import (
 )
 
 
-class NamedEntityModel:
+class NamedEntityModel(BaseModel):
     def __init__(self, model_path="./ner", model_type="bert-base-multilingual-cased"):
         self.model_path = model_path
         self.model_type = model_type

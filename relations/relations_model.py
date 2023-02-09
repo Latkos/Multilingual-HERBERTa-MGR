@@ -1,5 +1,7 @@
 import torch
 from tokenizers.trainers import Trainer
+
+from base_model.base_model import BaseModel
 from relations.relations_dataset import RelationsDataset
 from relations.relations_utility_functions import (
     prune_prefixes_from_labels,
@@ -17,7 +19,7 @@ from transformers import (
 )
 
 
-class RelationsModel:
+class RelationsModel(BaseModel):
     def __init__(self, model_path, model_name="bert-base-multilingual-cased"):
         self.model_path = model_path
         self.model_name = model_name
@@ -40,16 +42,15 @@ class RelationsModel:
         val_dataset = RelationsDataset(val_encodings, val_labels)
         # not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
         training_args = TrainingArguments(
-            output_dir="./re/result1",
+            output_dir=model_path,
             evaluation_strategy="steps",
-            learning_rate=2e-5,
-            per_device_train_batch_size=4,
-            per_device_eval_batch_size=4,
-            num_train_epochs=7,
-            weight_decay=0.01,
-            logging_steps=10000,
-            run_name="first_run",
+            per_device_train_batch_size=16,
+            per_device_eval_batch_size=16,
+            num_train_epochs=3,
+            warmup_steps=500,
+            save_total_limit=1,
             save_strategy="no",
+            load_best_model_at_end=False
         )
         labels_number = len(set(train_labels))
         model = BertForSequenceClassification.from_pretrained(
@@ -61,10 +62,8 @@ class RelationsModel:
             train_dataset=train_dataset,
             eval_dataset=val_dataset,
         )
-        torch.cuda.empty_cache()
         trainer.train()
         trainer.save_model(model_path)
-        self.last_trainer = trainer
         return model
 
     def evaluate(self, test_df, model_path=None, average_type="weighted"):
