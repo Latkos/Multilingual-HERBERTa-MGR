@@ -1,11 +1,11 @@
 import nltk
 from datasets import Dataset, load_metric
 import numpy as np
-from named_entity import ner_config
+from config import general_config
 
 
 def create_dataset_from_dataframe(df):
-    df = preprocess_dataframe(df, ner_config.label_mapping)
+    df = preprocess_dataframe(df, general_config.label_mapping)
     dataset = Dataset.from_pandas(df)
     return dataset
 
@@ -66,11 +66,11 @@ def compute_metrics(p):
     predictions = np.argmax(predictions, axis=2)
     # Remove ignored index (special tokens)
     true_predictions = [
-        [ner_config.label_names[p] for (p, l) in zip(prediction, label) if l != -100]
+        [general_config.label_names[p] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
     true_labels = [
-        [ner_config.label_names[l] for (p, l) in zip(prediction, label) if l != -100]
+        [general_config.label_names[l] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
     results = metric.compute(predictions=true_predictions, references=true_labels)

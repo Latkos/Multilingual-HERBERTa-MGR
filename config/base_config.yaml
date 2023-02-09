@@ -1,0 +1,18 @@
+train:
+  ner:
+    output_dir: "big-ner"
+    evaluation_strategy: "steps"
+    per_device_train_batch_size: 24
+    per_device_eval_batch_size: 24
+    num_train_epochs: 3
+    save_total_limit: 1
+    save_strategy: "no"
+
+
+  re:
+    output_dir: "results"
+    per_device_train_batch_size: 16
+    per_device_eval_batch_size: 64
+    num_train_epochs: 3
+    save_total_limit: 1
+    save_strategy: "no"

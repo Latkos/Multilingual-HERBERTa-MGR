@@ -18,6 +18,8 @@ from transformers import (
     pipeline,
 )
 
+from utils.config_parser import get_training_args
+
 
 class RelationsModel(BaseModel):
     def __init__(self, model_path, model_name="bert-base-multilingual-cased"):
@@ -26,7 +28,9 @@ class RelationsModel(BaseModel):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.last_trainer = None
 
-    def train(self, train_df, model_path=None, training_arguments=None, split=0.2):
+    def train(self, train_df, model_path=None, training_arguments=None, split=0.2, config_path='./config/base_config.yaml'):
+        if training_arguments is None:
+            training_arguments=get_training_args(config_path=config_path,model_type="re")
         if model_path is None:
             model_path = self.model_path
         if training_arguments is None:
@@ -69,7 +73,7 @@ class RelationsModel(BaseModel):
         )
         predicted_test_labels = generator(test_texts)
         predicted_test_labels = prune_prefixes_from_labels(predicted_test_labels)
-        calculate_metrics(
+        result=calculate_metrics(
             predictions=predicted_test_labels,
             labels=test_labels,
             average_type=average_type,

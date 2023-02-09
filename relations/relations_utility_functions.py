@@ -52,4 +52,5 @@ def calculate_metrics(labels, predictions, average_type="weighted"):
     print("RECALL: %.2f" % recall)
     print("F1 SCORE: %.2f" % f1)
     print("ACCURACY: %.2f" % accuracy)
-    return precision, recall, f1, accuracy
+    result = {"precision": precision, "accuracy": accuracy, "recall": recall, "f1": f1}
+    return result
