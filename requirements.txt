@@ -21,7 +21,6 @@ cmaes==0.9.1
 colorama==0.4.6
 colorlog==6.7.0
 comm==0.1.2
-cuda-python==12.0.0
 Cython==0.29.33
 datasets==2.9.0
 debugpy==1.6.6
@@ -83,7 +82,6 @@ nltk==3.8.1
 notebook==6.5.2
 notebook_shim==0.2.2
 numpy==1.24.1
-nvidia-cuda-runtime-cu117==11.7.60
 nvidia-pyindex==1.0.9
 optuna==3.1.0
 packaging==21.3
