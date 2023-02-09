@@ -16,6 +16,7 @@ from named_entity.named_entity_utility_functions import (
     get_model_output_as_sentence,
     compute_metrics,
 )
+from utils.config_parser import get_training_args
 
 
 class NamedEntityModel(BaseModel):
@@ -32,7 +33,9 @@ class NamedEntityModel(BaseModel):
         )
         return ds
 
-    def train(self, train_df, training_arguments=None, split=0.2):
+    def train(self, train_df, training_arguments=None, split=0.2, config_path='./config/base_config.yaml'):
+        if training_arguments is None:
+            training_arguments=get_training_args(config_path=config_path,model_type="ner")
         ds = self.preprocess_data(train_df)
         train_ds, val_ds = split_dataset(ds, split)
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
@@ -63,7 +66,10 @@ class NamedEntityModel(BaseModel):
             do_predict=True,
             per_device_eval_batch_size=16,
         )
-        trainer = Trainer(model=model, args=test_args, compute_metrics=compute_metrics)
+        data_collator = DataCollatorForTokenClassification(self.tokenizer)
+        trainer = Trainer(model=model, args=test_args,
+                          data_collator=data_collator,
+                          compute_metrics=compute_metrics)
         test_ds = self.preprocess_data(test_df)
         result = trainer.evaluate(test_ds)
         print("EVALUATION RESULT: ", result)
