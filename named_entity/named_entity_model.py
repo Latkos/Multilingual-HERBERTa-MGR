@@ -39,18 +39,8 @@ class NamedEntityModel(BaseModel):
         model = AutoModelForTokenClassification.from_pretrained(
             self.model_type, num_labels=len(ner_config.label_mapping)
         ).to("cuda:0")
-        training_args = TrainingArguments(
-            output_dir=f"{self.model_path}/training_output",
-            evaluation_strategy="steps",
-            learning_rate=2e-5,
-            per_device_train_batch_size=16,
-            per_device_eval_batch_size=16,
-            num_train_epochs=7,
-            weight_decay=0.01,
-            logging_steps=1000,
-            run_name="first_run",
-            save_strategy="no",
-        )
+        not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
+        training_args=TrainingArguments(**not_none_params)
         trainer = Trainer(
             model=model,
             args=training_args,

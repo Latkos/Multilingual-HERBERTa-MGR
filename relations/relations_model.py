@@ -40,22 +40,12 @@ class RelationsModel(BaseModel):
         val_encodings = tokenizer(val_texts, truncation=True, padding=True)
         train_dataset = RelationsDataset(train_encodings, train_labels)
         val_dataset = RelationsDataset(val_encodings, val_labels)
-        # not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
-        training_args = TrainingArguments(
-            output_dir=model_path,
-            evaluation_strategy="steps",
-            per_device_train_batch_size=16,
-            per_device_eval_batch_size=16,
-            num_train_epochs=3,
-            warmup_steps=500,
-            save_total_limit=1,
-            save_strategy="no",
-            load_best_model_at_end=False
-        )
         labels_number = len(set(train_labels))
         model = BertForSequenceClassification.from_pretrained(
             "bert-base-multilingual-cased", num_labels=labels_number
         ).to("cuda:0")
+        not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
+        training_args = TrainingArguments(**not_none_params)
         trainer = Trainer(
             model=model,
             args=training_args,
