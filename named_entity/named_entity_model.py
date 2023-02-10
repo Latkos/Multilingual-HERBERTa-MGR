@@ -116,3 +116,36 @@ class NamedEntityModel(BaseModel):
             total_adjusted_labels.append(adjusted_label_ids)
         tokenized_samples["labels"] = total_adjusted_labels
         return tokenized_samples
+
+    def model_init(self,trial):
+        return AutoModelForTokenClassification.from_pretrained(
+            self.model_type, num_labels=len(general_config.label_mapping)
+        ).to("cuda:0")
+
+    def perform_hyperparameter_search(self,train_df, space, config_path='./config/base_config.yaml',
+                                      training_arguments=None, split=0.2):
+        if training_arguments is None:
+            training_arguments=get_training_args(config_path=config_path,model_type="ner")
+        ds = self.preprocess_data(train_df)
+        train_ds, val_ds = split_dataset(ds, split)
+        data_collator = DataCollatorForTokenClassification(self.tokenizer)
+        not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
+        training_args=TrainingArguments(**not_none_params)
+        trainer = Trainer(
+            model=None,
+            args=training_args,
+            train_dataset=train_ds,
+            eval_dataset=val_ds,
+            compute_metrics=compute_metrics,
+            tokenizer=self.tokenizer,
+            model_init=self.model_init,
+            data_collator=data_collator,
+        )
+        best_trial = trainer.hyperparameter_search(
+            direction="maximize",
+            backend="optuna",
+            hp_space=space,
+            n_trials=20,
+        )
+        return best_trial
+

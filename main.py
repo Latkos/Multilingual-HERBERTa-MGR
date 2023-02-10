@@ -5,8 +5,7 @@ from relations.relations_model import RelationsModel
 from utils.config_parser import get_training_args
 from utils import csv_merger
 import pandas as pd
-from transformers import DataCollatorForTokenClassification
-
+from transformers import DataCollatorForTokenClassification, AutoModelForSequenceClassification
 
 # @click.group()
 # def bert_cli():
@@ -83,10 +82,40 @@ from transformers import DataCollatorForTokenClassification
 #         final_prediction["relation"] = prediction_result
 #         print("RE result:", prediction_result)
 
+INCORRECT_SENTENCES_IDS=[215077, ]
+
+def filter_out_wrong_data(df):
+    df['id'] = pd.to_numeric(df['id'], errors='coerce')
+    df = df.dropna(subset=['id'])
+    df['id'] = df['id'].astype('int')
+    df=df[~df['text'].str.contains('<e2</e1>')]
+    df=df[~df['text'].str.contains('<e2></e2>')]
+    return df
+
+def optuna_hp_space(trial):
+    return {
+        "learning_rate": trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True),
+        "per_device_train_batch_size": trial.suggest_categorical("per_device_train_batch_size", [8, 12, 16, 20, 24, 28, 32, 36]),
+    }
+
 
 if __name__ == "__main__":
-    train_df = pd.read_csv("data/en-full_corpora_train.tsv", sep="\t")
-    re_model = RelationsModel(model_path="./re_en-full_corpora_train/")
-    re_model.train(train_df)
-    test_df = pd.read_csv("data/en-full_corpora_train.tsv", sep="\t")
-    re_model.evaluate(test_df=test_df, model_path="./re_en-full_corpora_train/")
+    train_df = pd.read_csv("data/merged_train.tsv", sep="\t")
+    test_df = pd.read_csv("data/merged_test.tsv", sep="\t")
+    train_df=train_df.sample(frac=0.1)
+    test=test_df.sample(frac=0.1)
+
+    # train_df = pd.read_csv("data/en-small_corpora_train.tsv", sep="\t")
+    # test_df = pd.read_csv("data/en-small_corpora_test.tsv", sep="\t")
+
+    train_df=filter_out_wrong_data(train_df)
+    test_df=filter_out_wrong_data(test_df)
+    ner_model=NamedEntityModel()
+    ner_model.perform_hyperparameter_search(train_df=train_df,space=optuna_hp_space)
+
+    # train_df=train_df.sample(frac=0.25)
+    # # ner_model=NamedEntityModel(model_path="models/ner-en-small%")
+    # ner_model.train(train_df)
+    # ner_model.evaluate(test_df)
+    # csv_merger.merge_csv_files(path='data',pattern="*train.tsv",result_file_name="merged_train.tsv")
+    # csv_merger.merge_csv_files(path='data',pattern="*test.tsv",result_file_name="merged_test.tsv")

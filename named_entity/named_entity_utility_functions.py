@@ -29,7 +29,7 @@ def extract_tokens_and_create_labels(tokens, special_elements):
             start = new_tokens.index(tokens[start + 1])
             end = new_tokens.index(tokens[end - 1]) + 1
         except Exception as e:
-            print(str(e))
+            print(f"Exception: {tokens}")
             print(f"Tokens: {tokens}")
         labels[start] = "B-" + entity_label
         for i in range(start + 1, end):
