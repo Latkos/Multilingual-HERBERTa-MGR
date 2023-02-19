@@ -7,7 +7,8 @@ from relations.relations_utility_functions import (
     prune_prefixes_from_labels,
     map_result_to_text,
     calculate_metrics,
-    get_texts_and_labels, get_f1_from_metrics,
+    get_texts_and_labels,
+    get_f1_from_metrics,
 )
 from sklearn.model_selection import train_test_split
 from transformers import (
@@ -29,7 +30,13 @@ class RelationsModel(BaseModel):
         self.last_trainer = None
 
     def create_trainer(
-        self, train_df, model_path=None, training_arguments=None, split=0.2, config_path="./config/base_config.yaml", model_init=None
+        self,
+        train_df,
+        model_path=None,
+        training_arguments=None,
+        split=0.2,
+        config_path="./config/base_config.yaml",
+        model_init=None,
     ):
         if training_arguments is None:
             training_arguments = get_training_args(config_path=config_path, model_type="re")
@@ -53,14 +60,20 @@ class RelationsModel(BaseModel):
             args=training_args,
             train_dataset=train_dataset,
             eval_dataset=val_dataset,
-            model_init=model_init
+            model_init=model_init,
         )
         return trainer
 
     def train(
         self, train_df, model_path=None, training_arguments=None, split=0.2, config_path="./config/base_config.yaml"
     ):
-        trainer = self.create_trainer(train_df=train_df,model_path=model_path,training_arguments=training_arguments,split=-split,config_path=config_path)
+        trainer = self.create_trainer(
+            train_df=train_df,
+            model_path=model_path,
+            training_arguments=training_arguments,
+            split=-split,
+            config_path=config_path,
+        )
         trainer.train()
         trainer.save_model(model_path)
 
@@ -85,26 +98,41 @@ class RelationsModel(BaseModel):
             model_path = self.model_path
         model = BertForSequenceClassification.from_pretrained(model_path).to("cuda:0")
         generator = pipeline(task="text-classification", model=model, tokenizer=self.tokenizer, device=0)
+        # TODO: check how will it work if we cast predict on a previously trained model
         predicted_labels = generator(text)
         predicted_numeric_labels = prune_prefixes_from_labels(predicted_labels)
         result = map_result_to_text(predicted_numeric_labels, model_path)
         return result
 
-    def evaluate_with_division_between_languages(
-        self, train_df, model_path=None, training_arguments=None, split=0.2, config_path="./config/base_config.yaml"
-    ):
-        pass
+    def evaluate_with_division_between_languages(self, test_df, model_path=None, average_type="weighted"):
+        evaluation_results = {}
+        for language in test_df["lang"].unique():
+            lang_df = test_df[test_df["lang"] == language]
+            evaluation_results["language"] = self.evaluate(
+                test_df=lang_df, model_path=model_path, average_type=average_type
+            )
+        return evaluation_results
 
     def model_init(self, trial):
-        return BertForSequenceClassification.from_pretrained(
-            self.model_type
-        ).to("cuda:0")
-
+        return BertForSequenceClassification.from_pretrained(self.model_type).to("cuda:0")
 
     def perform_hyperparameter_search(
-            self, space, train_df, model_path=None, training_arguments=None, split=0.2, config_path="./config/base_config.yaml"
+        self,
+        space,
+        train_df,
+        model_path=None,
+        training_arguments=None,
+        split=0.2,
+        config_path="./config/base_config.yaml",
     ):
-        trainer = self.create_trainer(train_df=train_df,model_path=model_path,training_arguments=training_arguments,split=-split,config_path=config_path, model_init=self.model_init)
+        trainer = self.create_trainer(
+            train_df=train_df,
+            model_path=model_path,
+            training_arguments=training_arguments,
+            split=-split,
+            config_path=config_path,
+            model_init=self.model_init,
+        )
         best_trial = trainer.hyperparameter_search(
             direction="maximize", backend="optuna", hp_space=space, n_trials=50, compute_objective=get_f1_from_metrics
         )

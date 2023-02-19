@@ -53,5 +53,5 @@ def calculate_metrics(labels, predictions, average_type="weighted"):
 
 
 def get_f1_from_metrics(metrics):
-    f1 = metrics['f1']
+    f1 = metrics["f1"]
     return f1
