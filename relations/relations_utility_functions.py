@@ -11,9 +11,7 @@ import evaluate
 def get_texts_and_labels(df, model_path):
     texts = df["text"].tolist()
     labels = df["label"].tolist()
-    map = dict(
-        [(y, x) for x, y in enumerate(sorted(set(labels)))]
-    )  # get a dict of distinct labels and their numbers
+    map = dict([(y, x) for x, y in enumerate(sorted(set(labels)))])  # get a dict of distinct labels and their numbers
     labels = [map[x] for x in labels]
     map_path = f"{model_path}/map.json"
     inverted_map = {v: k for k, v in map.items()}
@@ -44,9 +42,7 @@ def map_result_to_text(result, model_path):
 def calculate_metrics(labels, predictions, average_type="weighted"):
     print(f"PREDICTIONS: {predictions}")
     print(f"LABELS: {labels}")
-    precision, recall, f1, _ = precision_recall_fscore_support(
-        labels, predictions, average=average_type
-    )
+    precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average=average_type)
     accuracy = accuracy_score(labels, predictions)
     print("PRECISION: %.2f" % precision)
     print("RECALL: %.2f" % recall)
@@ -54,3 +50,8 @@ def calculate_metrics(labels, predictions, average_type="weighted"):
     print("ACCURACY: %.2f" % accuracy)
     result = {"precision": precision, "accuracy": accuracy, "recall": recall, "f1": f1}
     return result
+
+
+def get_f1_from_metrics(metrics):
+    f1 = metrics['f1']
+    return f1
