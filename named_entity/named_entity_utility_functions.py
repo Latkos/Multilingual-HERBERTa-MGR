@@ -60,6 +60,11 @@ def split_dataset(ds, split=0.2):
     return train, val
 
 
+def get_f1_from_metrics(metrics):
+    f1 = metrics["eval_overall_f1"]
+    return f1
+
+
 def compute_metrics(p):
     metric = load_metric("seqeval")
     predictions, labels = p
@@ -84,6 +89,11 @@ def compute_metrics(p):
         if k not in flattened_results.keys():
             flattened_results[k + "_f1"] = results[k]["f1"]
     return flattened_results
+
+
+def compute_objective(p):
+    result = compute_metrics(p)
+    return result["overall_f1"]
 
 
 def get_model_output_as_sentence(ner_output):

@@ -14,7 +14,7 @@ from named_entity.named_entity_utility_functions import (
     split_dataset,
     create_dataset_from_dataframe,
     get_model_output_as_sentence,
-    compute_metrics,
+    compute_metrics, compute_objective, get_f1_from_metrics,
 )
 from utils.config_parser import get_training_args
 
@@ -131,6 +131,7 @@ class NamedEntityModel(BaseModel):
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
         not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
         training_args=TrainingArguments(**not_none_params)
+        print(f"Training args: {training_args}")
         trainer = Trainer(
             model=None,
             args=training_args,
@@ -145,7 +146,9 @@ class NamedEntityModel(BaseModel):
             direction="maximize",
             backend="optuna",
             hp_space=space,
-            n_trials=20,
+            n_trials=50,
+            compute_objective=get_f1_from_metrics
         )
         return best_trial
+
 
