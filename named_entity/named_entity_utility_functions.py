@@ -11,9 +11,7 @@ def create_dataset_from_dataframe(df):
 
 
 def preprocess_dataframe(df, label_mapping):
-    df["tokens"], df["labels"] = zip(
-        *df["text"].map(create_tokens_and_labels_for_two_entities)
-    )
+    df["tokens"], df["labels"] = zip(*df["text"].map(create_tokens_and_labels_for_two_entities))
     df["ner_tags"] = df["labels"].apply(lambda x: [label_mapping[i] for i in x])
     return df
 
