@@ -60,6 +60,7 @@ def split_dataset(ds, split=0.2):
 
 def get_f1_from_metrics(metrics):
     f1 = metrics["eval_overall_f1"]
+    print(f"f1: {f1}")
     return f1
 
 
