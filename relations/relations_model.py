@@ -71,7 +71,7 @@ class RelationsModel(BaseModel):
             train_df=train_df,
             model_path=model_path,
             training_arguments=training_arguments,
-            split=-split,
+            split=split,
             config_path=config_path,
         )
         trainer.train()
@@ -106,7 +106,10 @@ class RelationsModel(BaseModel):
 
     def evaluate_with_division_between_languages(self, test_df, model_path=None, average_type="weighted"):
         evaluation_results = {}
+        print("COMMENCING EVALUATION")
+        print(test_df["lang"].unique())
         for language in test_df["lang"].unique():
+            print(f"Language: {language}")
             lang_df = test_df[test_df["lang"] == language]
             evaluation_results["language"] = self.evaluate(
                 test_df=lang_df, model_path=model_path, average_type=average_type
@@ -121,15 +124,13 @@ class RelationsModel(BaseModel):
         space,
         train_df,
         model_path=None,
-        training_arguments=None,
-        split=0.2,
         config_path="./config/base_config.yaml",
     ):
+        if model_path is None:
+            model_path=self.model_path
         trainer = self.create_trainer(
             train_df=train_df,
             model_path=model_path,
-            training_arguments=training_arguments,
-            split=-split,
             config_path=config_path,
             model_init=self.model_init,
         )
