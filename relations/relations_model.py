@@ -32,7 +32,7 @@ class RelationsModel(BaseModel):
     def create_trainer(
         self,
         train_df,
-        model_path=None,
+        model_path,
         training_arguments=None,
         split=0.2,
         config_path="./config/base_config.yaml",
@@ -40,8 +40,6 @@ class RelationsModel(BaseModel):
     ):
         if training_arguments is None:
             training_arguments = get_training_args(config_path=config_path, model_type="re")
-        if model_path is None:
-            model_path = self.model_path
         train_texts, train_labels = get_texts_and_labels(train_df, model_path)
         train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, train_labels, test_size=split)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
@@ -67,6 +65,8 @@ class RelationsModel(BaseModel):
     def train(
         self, train_df, model_path=None, training_arguments=None, split=0.2, config_path="./config/base_config.yaml"
     ):
+        if model_path is None:
+            model_path=self.model_path
         trainer = self.create_trainer(
             train_df=train_df,
             model_path=model_path,
@@ -74,6 +74,7 @@ class RelationsModel(BaseModel):
             split=split,
             config_path=config_path,
         )
+        print("TRAINING")
         trainer.train()
         trainer.save_model(model_path)
 
