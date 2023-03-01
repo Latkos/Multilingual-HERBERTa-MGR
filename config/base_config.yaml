@@ -1,18 +1,25 @@
 train:
+  # trial 19
   ner:
-    output_dir: "big-ner"
+    output_dir: "ner"
     evaluation_strategy: "steps"
     per_device_train_batch_size: 24
     per_device_eval_batch_size: 24
-    num_train_epochs: 3
+    num_train_epochs: 1
+    warmup_ratio: 0.28
+    weight_decay: 0.167
+    learning_rate: 5.737e-05
+
+    logging_steps: 20000
+    load_best_model_at_end: True
     save_total_limit: 1
-    save_strategy: "no"
+    save_steps: 20000
 
 
   re:
-    output_dir: "results"
+    output_dir: "re"
     per_device_train_batch_size: 16
-    per_device_eval_batch_size: 64
+    per_device_eval_batch_size: 16
     num_train_epochs: 3
     save_total_limit: 1
     save_strategy: "no"
