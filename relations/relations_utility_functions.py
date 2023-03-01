@@ -5,19 +5,27 @@ import numpy as np
 from datasets import load_metric
 from seqeval.metrics import accuracy_score
 from sklearn.metrics import precision_recall_fscore_support
-import evaluate
 
 
-def get_texts_and_labels(df, model_path):
+def get_texts_and_labels(df, model_path,read=False):
     texts = df["text"].tolist()
     labels = df["label"].tolist()
-    map = dict([(y, x) for x, y in enumerate(sorted(set(labels)))])  # get a dict of distinct labels and their numbers
+    if read:
+        with open(f"{model_path}/map.json") as map_file:
+            map=json.load(map_file)
+    else:
+        map = dict([(y, x) for x, y in enumerate(sorted(set(labels)))])  # get a dict of distinct labels and their numbers
+        map_path= f"{model_path}/map.json"
+        os.makedirs(os.path.dirname(map_path), exist_ok=True)
+        with open(map_path, "w+") as f:
+            json.dump(map, f)
     labels = [map[x] for x in labels]
-    map_path = f"{model_path}/map.json"
-    inverted_map = {v: k for k, v in map.items()}
-    os.makedirs(os.path.dirname(map_path), exist_ok=True)
-    with open(map_path, "w+") as f:
-        json.dump(inverted_map, f)
+    # map_path =
+    # inverted_map = {v: k for k, v in map.items()}
+    # print(f"INVERTED MAP: {inverted_map}")
+    # os.makedirs(os.path.dirname(map_path), exist_ok=True)
+    # with open(map_path, "w+") as f:
+    #     json.dump(inverted_map, f)
     return texts, labels
 
 
@@ -40,8 +48,6 @@ def map_result_to_text(result, model_path):
 
 
 def calculate_metrics(labels, predictions, average_type="weighted"):
-    print(f"PREDICTIONS: {predictions}")
-    print(f"LABELS: {labels}")
     precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average=average_type)
     accuracy = accuracy_score(labels, predictions)
     print("PRECISION: %.2f" % precision)
@@ -55,3 +61,4 @@ def calculate_metrics(labels, predictions, average_type="weighted"):
 def get_f1_from_metrics(metrics):
     f1 = metrics["f1"]
     return f1
+
