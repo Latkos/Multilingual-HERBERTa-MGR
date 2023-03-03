@@ -1,4 +1,5 @@
 import nltk
+import pandas as pd
 from datasets import Dataset, load_metric
 import numpy as np
 from config import general_config
@@ -115,5 +116,7 @@ def get_model_output_as_sentence(ner_output):
         text += item["word"]
     text = text.replace(entity_1, " <e1> " + entity_1 + " </e1> ")
     text = text.replace(entity_2, " <e2> " + entity_2 + " </e2> ")
-    result = [{"ENTITY_1": entity_1, "ENTITY_2": entity_2, "TEXT": text}]
+    result = {"entity_1": entity_1, "entity_2": entity_2, "text": text}
     return result
+
+

@@ -15,11 +15,10 @@ from named_entity.named_entity_utility_functions import (
     create_dataset_from_dataframe,
     get_model_output_as_sentence,
     compute_metrics,
-    compute_objective,
     get_f1_from_metrics,
 )
 from utils.config_parser import get_training_args
-
+import pandas as pd
 
 class NamedEntityModel(BaseModel):
     def __init__(self, model_path="./ner", model_type="bert-base-multilingual-cased"):
@@ -80,7 +79,9 @@ class NamedEntityModel(BaseModel):
         print("EVALUATION RESULT: ", result)
         return result
 
-    def predict(self, sentences, model_path):
+    def predict(self, sentences, model_path=None):
+        if model_path is None:
+            model_path = self.model_path
         model = BertForTokenClassification.from_pretrained(model_path)
         tokenizer = self.tokenizer
         token_classifier = pipeline(
@@ -139,3 +140,15 @@ class NamedEntityModel(BaseModel):
             direction="maximize", backend="optuna", hp_space=space, n_trials=50, compute_objective=get_f1_from_metrics
         )
         return best_trial
+
+    def add_predictions_and_correctness_label_to_dataframe(self,test_df, model_path=None):
+        if model_path is None:
+            model_path=self.model_path
+        original_entities_df = test_df[['entity_1','entity_2']]
+        sentences=test_df['text'].tolist()
+        prediction_results=self.predict(sentences)
+        results_df=pd.DataFrame(prediction_results)
+        results_df=results_df[['entity_1','entity_2']]
+        compared_df=original_entities_df.compare(other=results_df,keep_shape=True,
+                                                 keep_equal=True)
+        return compared_df  
