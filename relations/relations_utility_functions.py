@@ -47,7 +47,7 @@ def map_result_to_text(result, model_path):
     return result
 
 
-def calculate_metrics(labels, predictions, average_type="weighted"):
+def calculate_metrics(labels, predictions, average_type="micro"):
     precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average=average_type)
     accuracy = accuracy_score(labels, predictions)
     print("PRECISION: %.2f" % precision)
@@ -59,6 +59,7 @@ def calculate_metrics(labels, predictions, average_type="weighted"):
 
 
 def get_f1_from_metrics(metrics):
+    print("IN FUNCTION get_f1_from_metrics, the variable metrics has value:")
+    print(metrics)
     f1 = metrics["f1"]
     return f1
-

@@ -42,7 +42,6 @@ class RelationsModel(BaseModel):
         if training_arguments is None:
             training_arguments = get_training_args(config_path=config_path, model_type="re")
         train_texts, train_labels = get_texts_and_labels(train_df, model_path)
-
         train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, train_labels, test_size=split)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
         train_encodings = tokenizer(train_texts, truncation=True, padding=True)
@@ -128,7 +127,12 @@ class RelationsModel(BaseModel):
         return evaluation_results
 
     def model_init(self, trial):
-        return BertForSequenceClassification.from_pretrained(self.model_type).to("cuda:0")
+        # return BertForSequenceClassification.from_pretrained(self.model_name).to("cuda:0")
+        with open(f"{self.model_path}/map.json") as map_file:
+            map = json.load(map_file)
+        labels_number = len(map)
+        return BertForSequenceClassification.from_pretrained(self.model_name,num_labels=labels_number).to("cuda:0")
+
 
     def perform_hyperparameter_search(
         self,
