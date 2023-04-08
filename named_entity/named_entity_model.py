@@ -20,6 +20,7 @@ from named_entity.named_entity_utility_functions import (
 from utils.config_parser import get_training_args
 import pandas as pd
 
+
 class NamedEntityModel(BaseModel):
     def __init__(self, model_path="./ner", model_type="bert-base-multilingual-cased"):
         self.model_path = model_path
@@ -29,14 +30,23 @@ class NamedEntityModel(BaseModel):
     def preprocess_data(self, df):
         ds = create_dataset_from_dataframe(df)
         ds = ds.map(self.tokenize_adjust_labels, batched=True)
-        ds = ds.remove_columns(column_names=["id", "entity_1", "entity_2", "label", "text", "lang"])
+        ds = ds.remove_columns(
+            column_names=["id", "entity_1", "entity_2", "label", "text", "lang"]
+        )
         return ds
 
     def create_trainer(
-        self, train_df, training_arguments=None, config_path="./config/base_config.yaml", split=0.2, model_init=None
+        self,
+        train_df,
+        training_arguments=None,
+        config_path="./config/base_config.yaml",
+        split=0.2,
+        model_init=None,
     ):
         if training_arguments is None:
-            training_arguments = get_training_args(config_path=config_path, model_type="ner")
+            training_arguments = get_training_args(
+                config_path=config_path, model_type="ner"
+            )
         ds = self.preprocess_data(train_df)
         train_ds, val_ds = split_dataset(ds, split)
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
@@ -57,8 +67,16 @@ class NamedEntityModel(BaseModel):
         )
         return trainer
 
-    def train(self, train_df, training_arguments=None, split=0.2, config_path="./config/base_config.yaml"):
-        trainer = self.create_trainer(train_df=train_df, training_arguments=training_arguments, split=split)
+    def train(
+        self,
+        train_df,
+        training_arguments=None,
+        split=0.2,
+        config_path="./config/base_config.yaml",
+    ):
+        trainer = self.create_trainer(
+            train_df=train_df, training_arguments=training_arguments, split=split
+        )
         trainer.train()
         trainer.save_model(self.model_path)
 
@@ -70,10 +88,14 @@ class NamedEntityModel(BaseModel):
             output_dir=".placeholder",
             do_train=False,
             do_predict=True,
-            per_device_eval_batch_size=16,
         )
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
-        trainer = Trainer(model=model, args=test_args, data_collator=data_collator, compute_metrics=compute_metrics)
+        trainer = Trainer(
+            model=model,
+            args=test_args,
+            data_collator=data_collator,
+            compute_metrics=compute_metrics,
+        )
         test_ds = self.preprocess_data(test_df)
         result = trainer.evaluate(test_ds)
         print("EVALUATION RESULT: ", result)
@@ -89,6 +111,7 @@ class NamedEntityModel(BaseModel):
             model=model,
             tokenizer=tokenizer,
             aggregation_strategy="simple",
+            device=0,
         )
         groups = token_classifier(sentences)
         result = []
@@ -100,7 +123,9 @@ class NamedEntityModel(BaseModel):
         return result
 
     def tokenize_adjust_labels(self, all_samples_per_split):
-        tokenized_samples = self.tokenizer.batch_encode_plus(all_samples_per_split["tokens"], is_split_into_words=True)
+        tokenized_samples = self.tokenizer.batch_encode_plus(
+            all_samples_per_split["tokens"], is_split_into_words=True
+        )
         total_adjusted_labels = []
         for k in range(0, len(tokenized_samples["input_ids"])):
             prev_wid = -1
@@ -127,7 +152,13 @@ class NamedEntityModel(BaseModel):
         ).to("cuda:0")
 
     def perform_hyperparameter_search(
-        self, train_df, space, config_path="./config/base_config.yaml", training_arguments=None, split=0.2
+        self,
+        train_df,
+        space,
+        config_path="./config/base_config.yaml",
+        training_arguments=None,
+        number_of_trials=50,
+        split=0.2,
     ):
         trainer = self.create_trainer(
             train_df=train_df,
@@ -137,18 +168,23 @@ class NamedEntityModel(BaseModel):
             model_init=self.model_init,
         )
         best_trial = trainer.hyperparameter_search(
-            direction="maximize", backend="optuna", hp_space=space, n_trials=50, compute_objective=get_f1_from_metrics
+            direction="maximize",
+            backend="optuna",
+            hp_space=space,
+            n_trials=number_of_trials,
+            compute_objective=get_f1_from_metrics,
         )
         return best_trial
 
-    def add_predictions_and_correctness_label_to_dataframe(self,test_df, model_path=None):
+    def add_predictions_and_correctness_label_to_dataframe(
+        self, test_df, model_path=None
+    ):
         if model_path is None:
-            model_path=self.model_path
-        original_entities_df = test_df[['entity_1','entity_2']]
-        sentences=test_df['text'].tolist()
-        prediction_results=self.predict(sentences)
-        results_df=pd.DataFrame(prediction_results)
-        results_df=results_df[['entity_1','entity_2']]
-        compared_df=original_entities_df.compare(other=results_df,keep_shape=True,
-                                                 keep_equal=True)
-        return compared_df  
+            model_path = self.model_path
+        original_entities_df = test_df.reset_index()
+        sentences = test_df["text"].tolist()
+        model = NamedEntityModel(model_path=model_path)
+        prediction_results = model.predict(sentences)
+        results_df = pd.DataFrame(prediction_results)
+        results_df = results_df.reset_index()
+        return original_entities_df, results_df
