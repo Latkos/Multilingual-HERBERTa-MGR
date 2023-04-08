@@ -12,7 +12,9 @@ def create_dataset_from_dataframe(df):
 
 
 def preprocess_dataframe(df, label_mapping):
-    df["tokens"], df["labels"] = zip(*df["text"].map(create_tokens_and_labels_for_two_entities))
+    df["tokens"], df["labels"] = zip(
+        *df["text"].map(create_tokens_and_labels_for_two_entities)
+    )
     df["ner_tags"] = df["labels"].apply(lambda x: [label_mapping[i] for i in x])
     return df
 
@@ -71,11 +73,19 @@ def compute_metrics(p):
     predictions = np.argmax(predictions, axis=2)
     # Remove ignored index (special tokens)
     true_predictions = [
-        [general_config.label_names[p] for (p, l) in zip(prediction, label) if l != -100]
+        [
+            general_config.label_names[p]
+            for (p, l) in zip(prediction, label)
+            if l != -100
+        ]
         for prediction, label in zip(predictions, labels)
     ]
     true_labels = [
-        [general_config.label_names[l] for (p, l) in zip(prediction, label) if l != -100]
+        [
+            general_config.label_names[l]
+            for (p, l) in zip(prediction, label)
+            if l != -100
+        ]
         for prediction, label in zip(predictions, labels)
     ]
     results = metric.compute(predictions=true_predictions, references=true_labels)
@@ -96,10 +106,34 @@ def compute_objective(p):
     return result["overall_f1"]
 
 
+def get_unlabeled_text(ner_output):
+    text = ""
+    for item in ner_output:
+        text += item["word"] + " "
+    text = text.replace(" .", ".")
+    text = text.strip()
+    result = {"entity_1": "", "entity_2": "", "text": text}
+    return result
+
+
 def get_model_output_as_sentence(ner_output):
     entity_1 = ""
     entity_2 = ""
     text = ""
+    if not next(
+        (item for item in ner_output if item["entity_group"] == "LABEL_1"), False
+    ):
+        print(
+            "Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead"
+        )
+        return get_unlabeled_text(ner_output)
+    if not next(
+        (item for item in ner_output if item["entity_group"] == "LABEL_3"), False
+    ):
+        print(
+            "Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead"
+        )
+        return get_unlabeled_text(ner_output)
     for item in ner_output:
         if item["entity_group"] == "LABEL_1":
             entity_1 += item["word"]
@@ -114,9 +148,12 @@ def get_model_output_as_sentence(ner_output):
             entity_2 = " "
             entity_2 += item["word"]
         text += item["word"]
-    text = text.replace(entity_1, " <e1> " + entity_1 + " </e1> ")
-    text = text.replace(entity_2, " <e2> " + entity_2 + " </e2> ")
+    text = text.replace(entity_1, "<e1>" + entity_1 + "</e1> ")
+    text = text.replace(entity_2, " <e2>" + entity_2 + "</e2> ")
+    text = text.replace(" .", ".")
+    text = text.strip()
     result = {"entity_1": entity_1, "entity_2": entity_2, "text": text}
     return result
 
 
+# TODO MOVE THAT TO SOME OTHER PLACE WHEN REFACTORING
