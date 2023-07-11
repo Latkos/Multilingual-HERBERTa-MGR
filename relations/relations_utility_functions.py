@@ -44,9 +44,7 @@ def map_result_to_text(result, model_path):
 
 
 def calculate_metrics(labels, predictions, average_type="micro"):
-    precision, recall, f1, _ = precision_recall_fscore_support(
-        labels, predictions, average=average_type
-    )
+    precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average=average_type)
     accuracy = accuracy_score(labels, predictions)
     print("PRECISION: %.2f" % precision)
     print("RECALL: %.2f" % recall)
@@ -68,7 +66,5 @@ def compute_metrics(p):
     print(f"labels unchanged: {type(labels)} {labels[0]} {labels[1]}")
     predictions = np.argmax(predictions, axis=1)
     print(f"predictions after: {type(predictions)}  {predictions[0]} {predictions[1]}")
-    results = metric.compute(
-        predictions=predictions, references=labels, average="micro"
-    )
+    results = metric.compute(predictions=predictions, references=labels, average="micro")
     return results

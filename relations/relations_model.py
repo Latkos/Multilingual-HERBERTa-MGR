@@ -1,6 +1,4 @@
 import json
-
-import torch
 from tokenizers.trainers import Trainer
 
 from base_model.base_model import BaseModel
@@ -27,9 +25,30 @@ from utils.config_parser import get_training_args
 
 class RelationsModel(BaseModel):
     def __init__(self, model_path, model_name="bert-base-multilingual-cased"):
+        super().__init__(model_path)
         self.model_path = model_path
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+
+    def train(
+        self,
+        train_df,
+        model_path=None,
+        training_arguments=None,
+        split=0.2,
+        config_path="./config/base_config.yaml",
+    ):
+        if model_path is None:
+            model_path = self.model_path
+        trainer = self.create_trainer(
+            train_df=train_df,
+            model_path=model_path,
+            training_arguments=training_arguments,
+            split=split,
+            config_path=config_path,
+        )
+        trainer.train()
+        trainer.save_model(model_path)
 
     def create_trainer(
         self,
@@ -41,13 +60,9 @@ class RelationsModel(BaseModel):
         model_init=None,
     ):
         if training_arguments is None:
-            training_arguments = get_training_args(
-                config_path=config_path, model_type="re"
-            )
-        train_texts, train_labels = get_texts_and_labels(train_df, model_path)
-        train_texts, val_texts, train_labels, val_labels = train_test_split(
-            train_texts, train_labels, test_size=split
-        )
+            training_arguments = get_training_args(config_path=config_path, model_type="re")
+        texts, labels = get_texts_and_labels(train_df, model_path)
+        train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=split)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
         train_encodings = tokenizer(train_texts, truncation=True, padding=True)
         val_encodings = tokenizer(val_texts, truncation=True, padding=True)
@@ -71,45 +86,21 @@ class RelationsModel(BaseModel):
         )
         return trainer
 
-    def train(
-        self,
-        train_df,
-        model_path=None,
-        training_arguments=None,
-        split=0.2,
-        config_path="./config/base_config.yaml",
-    ):
+    def evaluate(self, test_df, model_path=None, average_type="micro"):
         if model_path is None:
             model_path = self.model_path
-        trainer = self.create_trainer(
-            train_df=train_df,
-            model_path=model_path,
-            training_arguments=training_arguments,
-            split=split,
-            config_path=config_path,
-        )
-        trainer.train()
-        trainer.save_model(model_path)
-
-    def evaluate(self, test_df, model_path=None, average_type="weighted"):
-        if model_path is None:
-            model_path = self.model_path
-        test_texts, test_labels = get_texts_and_labels(test_df, model_path, read=True)
+        texts, labels = get_texts_and_labels(test_df, model_path, read=True)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        model = BertForSequenceClassification.from_pretrained(
-            model_path, num_labels=labels_number
-        ).to("cuda:0")
-        generator = pipeline(
-            task="text-classification", model=model, tokenizer=tokenizer, device=0
-        )
-        predicted_test_labels = generator(test_texts)
+        model = BertForSequenceClassification.from_pretrained(model_path, num_labels=labels_number).to("cuda:0")
+        generator = pipeline(task="text-classification", model=model, tokenizer=tokenizer, device=0)
+        predicted_test_labels = generator(texts)
         predicted_test_labels = prune_prefixes_from_labels(predicted_test_labels)
         result = calculate_metrics(
             predictions=predicted_test_labels,
-            labels=test_labels,
+            labels=labels,
             average_type=average_type,
         )
         return result
@@ -120,39 +111,20 @@ class RelationsModel(BaseModel):
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        model = BertForSequenceClassification.from_pretrained(
-            model_path, num_labels=labels_number
-        ).to("cuda:0")
-        generator = pipeline(
-            task="text-classification", model=model, tokenizer=self.tokenizer, device=0
-        )
+        model = BertForSequenceClassification.from_pretrained(model_path, num_labels=labels_number).to("cuda:0")
+        generator = pipeline(task="text-classification", model=model, tokenizer=self.tokenizer, device=0)
         # TODO: check how will it work if we cast predict on a previously trained model
         predicted_labels = generator(text)
         predicted_numeric_labels = prune_prefixes_from_labels(predicted_labels)
         result = map_result_to_text(predicted_numeric_labels, model_path)
         return result
 
-    def evaluate_with_division_between_languages(
-        self, test_df, model_path=None, average_type="weighted"
-    ):
-        evaluation_results = {}
-        print("COMMENCING EVALUATION")
-        print(test_df["lang"].unique())
-        for language in test_df["lang"].unique():
-            print(f"Language: {language}")
-            lang_df = test_df[test_df["lang"] == language]
-            evaluation_results["language"] = self.evaluate(
-                test_df=lang_df, model_path=model_path, average_type=average_type
-            )
-        return evaluation_results
 
     def model_init(self, trial):
         with open(f"{self.model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        return BertForSequenceClassification.from_pretrained(
-            self.model_name, num_labels=labels_number
-        ).to("cuda:0")
+        return BertForSequenceClassification.from_pretrained(self.model_name, num_labels=labels_number).to("cuda:0")
 
     def perform_hyperparameter_search(
         self,
