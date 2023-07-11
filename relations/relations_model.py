@@ -1,7 +1,4 @@
 import json
-from tokenizers.trainers import Trainer
-
-from base_model.base_model import BaseModel
 from relations.relations_dataset import RelationsDataset
 from relations.relations_utility_functions import (
     prune_prefixes_from_labels,
@@ -18,7 +15,7 @@ from transformers import (
     TrainingArguments,
     pipeline,
 )
-
+from base_model.base_model import BaseModel
 from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
 

@@ -46,10 +46,10 @@ def map_result_to_text(result, model_path):
 def calculate_metrics(labels, predictions, average_type="micro"):
     precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average=average_type)
     accuracy = accuracy_score(labels, predictions)
-    print("PRECISION: %.2f" % precision)
-    print("RECALL: %.2f" % recall)
-    print("F1 SCORE: %.2f" % f1)
-    print("ACCURACY: %.2f" % accuracy)
+    print(f"PRECISION: {round(precision,2)}")
+    print(f"RECALL: {round(recall,2)}")
+    print(f"F1 SCORE: {round(f1,2)}")
+    print(f"ACCURACY: {round(accuracy,2)}")
     result = {"precision": precision, "accuracy": accuracy, "recall": recall, "f1": f1}
     return result
 

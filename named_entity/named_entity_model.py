@@ -7,7 +7,6 @@ from transformers import (
     pipeline,
     BertForTokenClassification,
 )
-
 from base_model.base_model import BaseModel
 from config import general_config
 from named_entity.named_entity_utility_functions import (
@@ -18,8 +17,6 @@ from named_entity.named_entity_utility_functions import (
     tokenize_adjust_labels,
 )
 from utils.config_parser import get_training_args
-import pandas as pd
-
 from utils.evaluation import get_f1_from_metrics
 
 
@@ -37,7 +34,7 @@ class NamedEntityModel(BaseModel):
         split=0.2,
         config_path="./config/base_config.yaml",
     ):
-        trainer = self.create_trainer(train_df=train_df, training_arguments=training_arguments, split=split)
+        trainer = self.create_trainer(train_df=train_df, training_arguments=training_arguments, split=split, config_path=config_path)
         trainer.train()
         trainer.save_model(self.model_path)
 

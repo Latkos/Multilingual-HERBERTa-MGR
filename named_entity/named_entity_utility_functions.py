@@ -1,5 +1,4 @@
 import nltk
-import pandas as pd
 from datasets import Dataset, load_metric
 import numpy as np
 from config import general_config
