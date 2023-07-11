@@ -8,7 +8,6 @@ from relations.relations_utility_functions import (
     map_result_to_text,
     calculate_metrics,
     get_texts_and_labels,
-    get_f1_from_metrics,
     compute_metrics,
 )
 from sklearn.model_selection import train_test_split
@@ -21,6 +20,7 @@ from transformers import (
 )
 
 from utils.config_parser import get_training_args
+from utils.evaluation import get_f1_from_metrics
 
 
 class RelationsModel(BaseModel):
@@ -105,7 +105,7 @@ class RelationsModel(BaseModel):
         )
         return result
 
-    def predict(self, text, model_path=None):
+    def predict(self, sentences, model_path=None):
         if model_path is None:
             model_path = self.model_path
         with open(f"{model_path}/map.json") as map_file:
@@ -114,11 +114,10 @@ class RelationsModel(BaseModel):
         model = BertForSequenceClassification.from_pretrained(model_path, num_labels=labels_number).to("cuda:0")
         generator = pipeline(task="text-classification", model=model, tokenizer=self.tokenizer, device=0)
         # TODO: check how will it work if we cast predict on a previously trained model
-        predicted_labels = generator(text)
+        predicted_labels = generator(sentences)
         predicted_numeric_labels = prune_prefixes_from_labels(predicted_labels)
         result = map_result_to_text(predicted_numeric_labels, model_path)
         return result
-
 
     def model_init(self, trial):
         with open(f"{self.model_path}/map.json") as map_file:

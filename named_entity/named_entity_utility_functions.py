@@ -12,9 +12,7 @@ def create_dataset_from_dataframe(df):
 
 
 def preprocess_dataframe(df, label_mapping):
-    df["tokens"], df["labels"] = zip(
-        *df["text"].map(create_tokens_and_labels_for_two_entities)
-    )
+    df["tokens"], df["labels"] = zip(*df["text"].map(create_tokens_and_labels_for_two_entities))
     df["ner_tags"] = df["labels"].apply(lambda x: [label_mapping[i] for i in x])
     return df
 
@@ -61,31 +59,17 @@ def split_dataset(ds, split=0.2):
     return train, val
 
 
-def get_f1_from_metrics(metrics):
-    f1 = metrics["eval_overall_f1"]
-    print(f"f1: {f1}")
-    return f1
-
-
 def compute_metrics(p):
     metric = load_metric("seqeval")
     predictions, labels = p
     predictions = np.argmax(predictions, axis=2)
     # Remove ignored index (special tokens)
     true_predictions = [
-        [
-            general_config.label_names[p]
-            for (p, l) in zip(prediction, label)
-            if l != -100
-        ]
+        [general_config.label_names[p] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
     true_labels = [
-        [
-            general_config.label_names[l]
-            for (p, l) in zip(prediction, label)
-            if l != -100
-        ]
+        [general_config.label_names[l] for (p, l) in zip(prediction, label) if l != -100]
         for prediction, label in zip(predictions, labels)
     ]
     results = metric.compute(predictions=true_predictions, references=true_labels)
@@ -120,19 +104,11 @@ def get_model_output_as_sentence(ner_output):
     entity_1 = ""
     entity_2 = ""
     text = ""
-    if not next(
-        (item for item in ner_output if item["entity_group"] == "LABEL_1"), False
-    ):
-        print(
-            "Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead"
-        )
+    if not next((item for item in ner_output if item["entity_group"] == "LABEL_1"), False):
+        print("Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead")
         return get_unlabeled_text(ner_output)
-    if not next(
-        (item for item in ner_output if item["entity_group"] == "LABEL_3"), False
-    ):
-        print(
-            "Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead"
-        )
+    if not next((item for item in ner_output if item["entity_group"] == "LABEL_3"), False):
+        print("Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead")
         return get_unlabeled_text(ner_output)
     for item in ner_output:
         if item["entity_group"] == "LABEL_1":
@@ -156,4 +132,24 @@ def get_model_output_as_sentence(ner_output):
     return result
 
 
-# TODO MOVE THAT TO SOME OTHER PLACE WHEN REFACTORING
+def tokenize_adjust_labels(tokenizer, all_samples_per_split):
+    tokenized_samples = tokenizer.batch_encode_plus(all_samples_per_split["tokens"], is_split_into_words=True)
+    total_adjusted_labels = []
+    for k in range(0, len(tokenized_samples["input_ids"])):
+        prev_wid = -1
+        word_ids_list = tokenized_samples.word_ids(batch_index=k)
+        existing_label_ids = all_samples_per_split["ner_tags"][k]
+        i = -1
+        adjusted_label_ids = []
+        for wid in word_ids_list:
+            if wid is None:
+                adjusted_label_ids.append(-100)
+            elif wid != prev_wid:
+                i = i + 1
+                adjusted_label_ids.append(existing_label_ids[i])
+                prev_wid = wid
+            else:
+                adjusted_label_ids.append(existing_label_ids[i])
+        total_adjusted_labels.append(adjusted_label_ids)
+    tokenized_samples["labels"] = total_adjusted_labels
+    return tokenized_samples

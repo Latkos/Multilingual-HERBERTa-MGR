@@ -54,11 +54,6 @@ def calculate_metrics(labels, predictions, average_type="micro"):
     return result
 
 
-def get_f1_from_metrics(metrics):
-    f1 = metrics["eval_f1"]
-    return f1
-
-
 def compute_metrics(p):
     metric = load_metric("f1")
     predictions, labels = p
