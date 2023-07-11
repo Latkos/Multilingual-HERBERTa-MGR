@@ -5,7 +5,7 @@ import sys
 
 
 def merge_csv_files(path, pattern="*.tsv", result_file_name="merged.tsv"):
-    root_dir_path=os.path.dirname(sys.modules['__main__'].__file__)
+    root_dir_path = os.path.dirname(sys.modules["__main__"].__file__)
     allFiles = glob.glob(f"{root_dir_path}/{path}/{pattern}")
     allFiles.sort()
     print(f"Merging files: {allFiles}")
