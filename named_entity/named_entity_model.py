@@ -14,7 +14,6 @@ from named_entity.named_entity_utility_functions import (
     create_dataset_from_dataframe,
     get_model_output_as_sentence,
     compute_metrics,
-    tokenize_adjust_labels,
 )
 from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
