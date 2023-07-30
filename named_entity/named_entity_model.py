@@ -123,12 +123,10 @@ class NamedEntityModel(BaseModel):
         config_path="./config/base_config.yaml",
         training_arguments=None,
         number_of_trials=50,
-        split=0.2,
     ):
         trainer = self.create_trainer(
             train_df=train_df,
             training_arguments=training_arguments,
-            split=split,
             config_path=config_path,
             model_init=self.model_init,
         )
