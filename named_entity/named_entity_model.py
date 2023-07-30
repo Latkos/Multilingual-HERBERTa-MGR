@@ -70,9 +70,31 @@ class NamedEntityModel(BaseModel):
 
     def preprocess_data(self, df):
         ds = create_dataset_from_dataframe(df)
-        ds = ds.map(tokenize_adjust_labels(self.tokenizer), batched=True)
+        ds = ds.map(self.tokenize_adjust_labels, batched=True)
         ds = ds.remove_columns(column_names=["id", "entity_1", "entity_2", "label", "text", "lang"])
         return ds
+
+    def tokenize_adjust_labels(self, all_samples_per_split):
+        tokenized_samples = self.tokenizer.batch_encode_plus(all_samples_per_split["tokens"], is_split_into_words=True)
+        total_adjusted_labels = []
+        for k in range(0, len(tokenized_samples["input_ids"])):
+            prev_wid = -1
+            word_ids_list = tokenized_samples.word_ids(batch_index=k)
+            existing_label_ids = all_samples_per_split["ner_tags"][k]
+            i = -1
+            adjusted_label_ids = []
+            for wid in word_ids_list:
+                if wid is None:
+                    adjusted_label_ids.append(-100)
+                elif wid != prev_wid:
+                    i = i + 1
+                    adjusted_label_ids.append(existing_label_ids[i])
+                    prev_wid = wid
+                else:
+                    adjusted_label_ids.append(existing_label_ids[i])
+            total_adjusted_labels.append(adjusted_label_ids)
+        tokenized_samples["labels"] = total_adjusted_labels
+        return tokenized_samples
 
     def evaluate(self, df, model_path=None):
         if model_path is None:
@@ -143,3 +165,4 @@ class NamedEntityModel(BaseModel):
         return AutoModelForTokenClassification.from_pretrained(
             self.model_type, num_labels=len(general_config.label_mapping)
         ).to("cuda:0")
+
