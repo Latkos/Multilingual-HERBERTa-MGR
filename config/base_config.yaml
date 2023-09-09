@@ -1,25 +1,28 @@
 train:
-  # trial 19
+  # picked trial 1
   ner:
     output_dir: "ner"
-    evaluation_strategy: "steps"
-    per_device_train_batch_size: 24
-    per_device_eval_batch_size: 24
-    num_train_epochs: 1
-    warmup_ratio: 0.28
-    weight_decay: 0.167
-    learning_rate: 5.737e-05
-
-    logging_steps: 20000
-    load_best_model_at_end: True
-    save_total_limit: 1
-    save_steps: 20000
-
-
-  re:
-    output_dir: "re"
+    save_strategy: "no"
     per_device_train_batch_size: 16
     per_device_eval_batch_size: 16
-    num_train_epochs: 3
+    num_train_epochs: 2
+    warmup_ratio: 0.111
+    weight_decay: 0.187
+    learning_rate: 8.016e-05
+    logging_steps: 10000
+    load_best_model_at_end: True
+    report_to: "wandb"
+
+  re: # picked trial 1
+    output_dir: "re"
+    per_device_train_batch_size: 12
+    per_device_eval_batch_size: 12
     save_total_limit: 1
+    logging_steps: 10000
     save_strategy: "no"
+    learning_rate: 4.534e-05
+    num_train_epochs: 1
+    warmup_ratio: 0.030
+    weight_decay: 0.067
+    report_to: "wandb"
+
