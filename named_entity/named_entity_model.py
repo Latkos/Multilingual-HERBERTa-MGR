@@ -19,9 +19,8 @@ from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
 
 
-class NamedEntityModel(BaseModel):
+class NamedEntityModel():
     def __init__(self, model_path="./ner", model_type="bert-base-multilingual-cased"):
-        super().__init__(model_path, model_type)
         self.model_path = model_path
         self.model_type = model_type
         self.tokenizer = AutoTokenizer.from_pretrained(model_type)
@@ -29,13 +28,16 @@ class NamedEntityModel(BaseModel):
     def train(
         self,
         train_df,
+        model_path=None,
         training_arguments=None,
         split=0.2,
         config_path="./config/base_config.yaml",
     ):
+        if model_path is None:
+            model_path=self.model_path
         trainer = self.create_trainer(train_df=train_df, training_arguments=training_arguments, split=split, config_path=config_path)
         trainer.train()
-        trainer.save_model(self.model_path)
+        trainer.save_model(model_path)
 
     def create_trainer(
         self,

@@ -105,6 +105,7 @@ def get_model_output_as_sentence(ner_output):
     text = ""
     if not next((item for item in ner_output if item["entity_group"] == "LABEL_1"), False):
         print("Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead")
+        print("FIRST")
         return get_unlabeled_text(ner_output)
     if not next((item for item in ner_output if item["entity_group"] == "LABEL_3"), False):
         print("Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead")

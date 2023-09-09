@@ -20,9 +20,8 @@ from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
 
 
-class RelationsModel(BaseModel):
-    def __init__(self, model_path, model_name="bert-base-multilingual-cased"):
-        super().__init__(model_path)
+class RelationsModel():
+    def __init__(self, model_path="./re", model_name="bert-base-multilingual-cased"):
         self.model_path = model_path
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -83,10 +82,10 @@ class RelationsModel(BaseModel):
         )
         return trainer
 
-    def evaluate(self, test_df, model_path=None, average_type="micro"):
+    def evaluate(self, df, model_path=None, average_type="micro"):
         if model_path is None:
             model_path = self.model_path
-        texts, labels = get_texts_and_labels(test_df, model_path, read=True)
+        texts, labels = get_texts_and_labels(df, model_path, read=True)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)
