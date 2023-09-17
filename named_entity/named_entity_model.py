@@ -13,7 +13,7 @@ from named_entity.named_entity_utility_functions import (
     split_dataset,
     create_dataset_from_dataframe,
     get_model_output_as_sentence,
-    compute_metrics,
+    compute_metrics, remove_tags,
 )
 from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
@@ -130,6 +130,7 @@ class NamedEntityModel():
             aggregation_strategy="simple",
             device=0,
         )
+        sentences = [remove_tags(sentence) for sentence in sentences]
         groups = token_classifier(sentences)
         result = []
         if isinstance(groups[0], dict):

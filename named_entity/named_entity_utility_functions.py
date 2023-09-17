@@ -1,3 +1,5 @@
+import re
+
 import nltk
 from datasets import Dataset, load_metric
 import numpy as np
@@ -13,6 +15,7 @@ def create_dataset_from_dataframe(df):
 def preprocess_dataframe(df, label_mapping):
     df["tokens"], df["labels"] = zip(*df["text"].map(create_tokens_and_labels_for_two_entities))
     df["ner_tags"] = df["labels"].apply(lambda x: [label_mapping[i] for i in x])
+    df["text"] = df["text"].apply(remove_tags)
     return df
 
 
@@ -57,6 +60,11 @@ def split_dataset(ds, split=0.2):
     val = split_ds["test"]
     return train, val
 
+# Function to remove tags
+def remove_tags(sentence):
+    return re.sub(r'<[^>]+>', '', sentence)
+
+
 
 def compute_metrics(p):
     metric = load_metric("seqeval")
@@ -100,12 +108,12 @@ def get_unlabeled_text(ner_output):
 
 
 def get_model_output_as_sentence(ner_output):
+    print(f"GETTING OUTPUT AS A SENTENCE:\n {ner_output}")
     entity_1 = ""
     entity_2 = ""
     text = ""
     if not next((item for item in ner_output if item["entity_group"] == "LABEL_1"), False):
         print("Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead")
-        print("FIRST")
         return get_unlabeled_text(ner_output)
     if not next((item for item in ner_output if item["entity_group"] == "LABEL_3"), False):
         print("Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead")
@@ -124,9 +132,9 @@ def get_model_output_as_sentence(ner_output):
             entity_2 = " "
             entity_2 += item["word"]
         text += item["word"]
-    text = text.replace(entity_1, "<e1>" + entity_1 + "</e1> ")
-    text = text.replace(entity_2, " <e2>" + entity_2 + "</e2> ")
-    text = text.replace(" .", ".")
+    # text = text.replace(entity_1, "<e1>" + entity_1 + "</e1> ")
+    # text = text.replace(entity_2, " <e2>" + entity_2 + "</e2> ")
+    # text = text.replace(" .", ".")
     text = text.strip()
     result = {"entity_1": entity_1, "entity_2": entity_2, "text": text}
     return result
