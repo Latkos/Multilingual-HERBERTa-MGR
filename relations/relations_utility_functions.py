@@ -39,7 +39,8 @@ def map_result_to_text(result, model_path):
     map_path = f"{model_path}/map.json"
     with open(map_path, "r") as f:
         map = json.loads(f.read())
-    result = [map[str(label)] for label in result]
+    reverse_label_map = {value: key for key, value in map.items()}
+    result = [reverse_label_map[label] for label in result]
     return result
 
 
