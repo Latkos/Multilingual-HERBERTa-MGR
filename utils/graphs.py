@@ -4,7 +4,7 @@ import plotly.express as px
 
 
 
-def evaluate_model_on_subset(model, model_path, language_col, subset, test_df):
+def evaluate_model_on_subset(model, model_path, subset, test_df, language_col='lang'):
     filtered_df = test_df[test_df[language_col].isin(subset)]
     evaluation_results = model.evaluate(df=filtered_df, model_path=model_path)
     return evaluation_results

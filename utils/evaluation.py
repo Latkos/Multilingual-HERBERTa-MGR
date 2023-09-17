@@ -1,4 +1,3 @@
-
 def evaluate_with_division_between_column(model, test_df, column_name, average_type="micro"):
     print(f"COMMENCING EVALUATION DIVIDED BY {column_name} ")
     print(test_df[column_name].unique())
