@@ -4,7 +4,7 @@ def enhance_with_nothing(ner_predictions):
         text.append(prediction["text"])
     return text
 
-def enhance_with_swap(ner_predictions):
+def enhance_with_entity_differentiated(ner_predictions):
     enhanced_text = []
     for prediction in ner_predictions:
         enhanced_text.append(prediction["text"].replace(prediction["entity_1"], "Entity1").replace(prediction["entity_2"], "Entity2"))
