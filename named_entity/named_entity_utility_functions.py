@@ -15,7 +15,6 @@ def create_dataset_from_dataframe(df):
 def preprocess_dataframe(df, label_mapping):
     df["tokens"], df["labels"] = zip(*df["text"].map(create_tokens_and_labels_for_two_entities))
     df["ner_tags"] = df["labels"].apply(lambda x: [label_mapping[i] for i in x])
-    df["text"] = df["text"].apply(remove_tags)
     return df
 
 
@@ -60,11 +59,9 @@ def split_dataset(ds, split=0.2):
     val = split_ds["test"]
     return train, val
 
-# Function to remove tags
 def remove_tags(sentence):
-    return re.sub(r'<[^>]+>', '', sentence)
-
-
+    sentence=re.sub(r'<[^>]+>', '', sentence)
+    return sentence
 
 def compute_metrics(p):
     metric = load_metric("seqeval")
@@ -97,46 +94,33 @@ def compute_objective(p):
     return result["overall_f1"]
 
 
-def get_unlabeled_text(ner_output):
-    text = ""
-    for item in ner_output:
-        text += item["word"] + " "
-    text = text.replace(" .", ".")
-    text = text.strip()
-    result = {"entity_1": "", "entity_2": "", "text": text}
-    return result
+def get_unlabeled_text(sentence):
+    return {"entity_1": "", "entity_2": "", "text": sentence}
 
 
-def get_model_output_as_sentence(ner_output):
-    print(f"GETTING OUTPUT AS A SENTENCE:\n {ner_output}")
+def get_model_output_as_sentence(ner_output, sentence):
     entity_1 = ""
     entity_2 = ""
-    text = ""
     if not next((item for item in ner_output if item["entity_group"] == "LABEL_1"), False):
         print("Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead")
-        return get_unlabeled_text(ner_output)
+        return get_unlabeled_text(sentence)
     if not next((item for item in ner_output if item["entity_group"] == "LABEL_3"), False):
         print("Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead")
-        return get_unlabeled_text(ner_output)
+        return get_unlabeled_text(sentence)
     for item in ner_output:
         if item["entity_group"] == "LABEL_1":
             entity_1 += item["word"]
         if item["entity_group"] == "LABEL_2":
-            text += " "
             entity_1 += " "
             entity_1 += item["word"]
         if item["entity_group"] == "LABEL_3":
             entity_2 += item["word"]
         if item["entity_group"] == "LABEL_4":
-            text += " "
-            entity_2 = " "
+            entity_2+= " "
             entity_2 += item["word"]
-        text += item["word"]
-    # text = text.replace(entity_1, "<e1>" + entity_1 + "</e1> ")
-    # text = text.replace(entity_2, " <e2>" + entity_2 + "</e2> ")
-    # text = text.replace(" .", ".")
-    text = text.strip()
-    result = {"entity_1": entity_1, "entity_2": entity_2, "text": text}
+    entity_1=entity_1.strip()
+    entity_2=entity_2.strip()
+    result = {"entity_1": entity_1, "entity_2": entity_2, "text": sentence}
     return result
 
 

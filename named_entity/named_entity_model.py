@@ -134,10 +134,10 @@ class NamedEntityModel():
         groups = token_classifier(sentences)
         result = []
         if isinstance(groups[0], dict):
-            result.append(get_model_output_as_sentence(groups))
+            result.append(get_model_output_as_sentence(groups, sentences[0]))
         else:
-            for i in groups:
-                result.append(get_model_output_as_sentence(i))
+            for group, sentence in zip(groups, sentences):
+                result.append(get_model_output_as_sentence(group, sentence))
         return result
 
     def perform_hyperparameter_search(
