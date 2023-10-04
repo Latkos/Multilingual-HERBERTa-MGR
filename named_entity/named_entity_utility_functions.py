@@ -102,10 +102,10 @@ def get_model_output_as_sentence(ner_output, sentence):
     entity_1 = ""
     entity_2 = ""
     if not next((item for item in ner_output if item["entity_group"] == "LABEL_1"), False):
-        print("Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead")
+        # print("Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead")
         return get_unlabeled_text(sentence)
     if not next((item for item in ner_output if item["entity_group"] == "LABEL_3"), False):
-        print("Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead")
+        # print("Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead")
         return get_unlabeled_text(sentence)
     for item in ner_output:
         if item["entity_group"] == "LABEL_1":
@@ -118,8 +118,14 @@ def get_model_output_as_sentence(ner_output, sentence):
         if item["entity_group"] == "LABEL_4":
             entity_2+= " "
             entity_2 += item["word"]
+    punctuation_marks = [';', ',', '.', ':', '!', '?']
+    pattern = r'\s*([' + ''.join(re.escape(p) for p in punctuation_marks) + r'])'
+    entity_1 = re.sub(pattern, r'\1 ', entity_1)
+    entity_2 = re.sub(pattern, r'\1 ', entity_2)
     entity_1=entity_1.strip()
     entity_2=entity_2.strip()
+    entity_1=" ".join(entity_1.split())
+    entity_2=" ".join(entity_2.split())
     result = {"entity_1": entity_1, "entity_2": entity_2, "text": sentence}
     return result
 
