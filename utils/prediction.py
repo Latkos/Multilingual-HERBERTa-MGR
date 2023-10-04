@@ -11,7 +11,7 @@ def add_predictions_and_correctness_label_to_dataframe(model, test_df):
 
 
 def predict_joint_models(test_df, ner_model, re_model,enhance_function):
-    final_predictions = test_df
+    final_predictions = test_df.copy()
     sentences = test_df["text"].tolist()
     ner_predictions = ner_model.predict(sentences=sentences)
     text=enhance_function(ner_predictions)
