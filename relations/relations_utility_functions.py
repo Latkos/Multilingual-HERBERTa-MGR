@@ -64,3 +64,9 @@ def compute_metrics(p):
     print(f"predictions after: {type(predictions)}  {predictions[0]} {predictions[1]}")
     results = metric.compute(predictions=predictions, references=labels, average="micro")
     return results
+
+def remove_tags_from_dataframe(df):
+    tags = ['<e1>', '</e1>', '<e2>', '</e2>']
+    for tag in tags:
+        df['text'] = df['text'].str.replace(tag, '', regex=False)
+    return df

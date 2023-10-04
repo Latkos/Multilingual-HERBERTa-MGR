@@ -5,7 +5,7 @@ from relations.relations_utility_functions import (
     map_result_to_text,
     calculate_metrics,
     get_texts_and_labels,
-    compute_metrics,
+    compute_metrics, remove_tags_from_dataframe,
 )
 from sklearn.model_selection import train_test_split
 from transformers import (
@@ -54,9 +54,12 @@ class RelationsModel():
         split=0.2,
         config_path="./config/base_config.yaml",
         model_init=None,
+        remove_tags=True
     ):
         if training_arguments is None:
             training_arguments = get_training_args(config_path=config_path, model_type="re")
+        if remove_tags:
+            train_df=remove_tags_from_dataframe(train_df)
         texts, labels = get_texts_and_labels(train_df, model_path)
         train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=split)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
@@ -67,6 +70,8 @@ class RelationsModel():
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
+        for sample in train_texts[:2]:
+            print(sample)
         model = BertForSequenceClassification.from_pretrained(
             "bert-base-multilingual-cased", num_labels=labels_number
         ).to("cuda:0")
