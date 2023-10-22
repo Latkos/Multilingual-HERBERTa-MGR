@@ -10,4 +10,4 @@ wandb
 .csv
 .df
 .ipynb_checkpoints
-optuna_logs
+results
