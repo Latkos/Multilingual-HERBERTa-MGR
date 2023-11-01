@@ -23,10 +23,10 @@ from utils.evaluation import get_f1_from_metrics
 
 
 class RelationsModel():
-    def __init__(self, model_path="./re", model_name="bert-base-multilingual-cased"):
+    def __init__(self, model_path="./re", model_type="bert-base-multilingual-cased"):
         self.model_path = model_path
-        self.model_name = model_name
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.model_type = model_type
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_type)
 
     def train(
         self,
