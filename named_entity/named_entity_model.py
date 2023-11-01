@@ -47,19 +47,19 @@ class NamedEntityModel():
         split=0.2,
         model_init=None,
     ):
-        if training_arguments:
+        training_args=None
+        if not training_arguments:
             if config_path:
                 training_arguments = get_training_args(config_path=config_path, model_type="ner")
-            else:
-                training_arguments=None
         ds = self.preprocess_data(train_df)
         train_ds, val_ds = split_dataset(ds, split)
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
         model = AutoModelForTokenClassification.from_pretrained(
             self.model_type, num_labels=len(general_config.label_mapping)
         ).to("cuda:0")
-        not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
-        training_args = TrainingArguments(**not_none_params)
+        if training_arguments:
+            not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
+            training_args = TrainingArguments(**not_none_params)
         trainer = Trainer(
             model=model,
             args=training_args,

@@ -58,11 +58,9 @@ def calculate_metrics(labels, predictions, average_type="micro"):
 def compute_metrics(p):
     metric = load_metric("f1")
     predictions, labels = p
-    print(f"predictions before: {type(predictions)} {predictions[0]} {predictions[1]}")
-    print(f"labels unchanged: {type(labels)} {labels[0]} {labels[1]}")
     predictions = np.argmax(predictions, axis=1)
-    print(f"predictions after: {type(predictions)}  {predictions[0]} {predictions[1]}")
     results = metric.compute(predictions=predictions, references=labels, average="micro")
+    print(f"RESULTS: {results}")
     return results
 
 
