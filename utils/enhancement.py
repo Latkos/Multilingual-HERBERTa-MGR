@@ -33,3 +33,20 @@ def enhance_with_entity(ner_predictions):
             prediction["text"]=prediction["text"].replace(prediction["entity_2"],"Entity")
         enhanced_text.append(prediction["text"])
     return enhanced_text
+
+def enhance_with_special_characters (ner_predictions):
+    enhanced_text = []
+    for prediction in ner_predictions:
+        if prediction["entity_1"]!="":
+            prediction["text"]=prediction["text"].replace(prediction["entity_1"],f"${prediction['entity_1']}$")
+        if prediction["entity_2"]!="":
+            prediction["text"]=prediction["text"].replace(prediction["entity_2"],f"#{prediction['entity_2']}#")
+        enhanced_text.append(prediction["text"])
+    return enhanced_text
+
+def enhance_entities_only(ner_predictions):
+    enhanced_text = []
+    for prediction in ner_predictions:
+        prediction["text"] = f"{prediction['entity_1']} {prediction['entity_2']}"
+        enhanced_text.append(prediction["text"])
+    return enhanced_text
