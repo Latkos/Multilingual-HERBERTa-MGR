@@ -47,7 +47,6 @@ def create_tokens_and_labels_for_two_entities(text):
     for word, replacement in replacement_map.items():
         text = text.replace(word, replacement)
     text_tokens = nltk.word_tokenize(text)
-    # TODO unhardcode this
     special_elements = ["StartEntity1", "StopEntity1", "StartEntity2", "StopEntity2"]
     tokens, labels = extract_tokens_and_create_labels(text_tokens, special_elements)
     return tokens, labels

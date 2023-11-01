@@ -1,3 +1,4 @@
+import optuna
 from transformers import (
     DataCollatorForTokenClassification,
     AutoTokenizer,
@@ -7,7 +8,6 @@ from transformers import (
     pipeline,
     BertForTokenClassification,
 )
-from base_model.base_model import BaseModel
 from config import general_config
 from named_entity.named_entity_utility_functions import (
     split_dataset,
@@ -42,13 +42,16 @@ class NamedEntityModel():
     def create_trainer(
         self,
         train_df,
+        config_path,
         training_arguments=None,
-        config_path="./config/base_config.yaml",
         split=0.2,
         model_init=None,
     ):
-        if training_arguments is None:
-            training_arguments = get_training_args(config_path=config_path, model_type="ner")
+        if training_arguments:
+            if config_path:
+                training_arguments = get_training_args(config_path=config_path, model_type="ner")
+            else:
+                training_arguments=None
         ds = self.preprocess_data(train_df)
         train_ds, val_ds = split_dataset(ds, split)
         data_collator = DataCollatorForTokenClassification(self.tokenizer)
@@ -115,13 +118,12 @@ class NamedEntityModel():
         )
         ds = self.preprocess_data(df)
         result = trainer.evaluate(ds)
-        print("EVALUATION RESULT: ", result)
         return result
 
     def predict(self, sentences, model_path=None):
         if model_path is None:
             model_path = self.model_path
-        model = BertForTokenClassification.from_pretrained(model_path)
+        model = AutoModelForTokenClassification.from_pretrained(model_path)
         tokenizer = self.tokenizer
         token_classifier = pipeline(
             "token-classification",
@@ -140,13 +142,19 @@ class NamedEntityModel():
                 result.append(get_model_output_as_sentence(group, sentence))
         return result
 
+    def get_study_name(self,trial: optuna.Trial):
+        return f"{self.__class__.__name__}_{trial.number}"
+
     def perform_hyperparameter_search(
         self,
         train_df,
         space,
+        study_name,
         config_path="./config/base_config.yaml",
         training_arguments=None,
         number_of_trials=50,
+        storage='sqlite:///example.db',
+        load_if_exists=True,
     ):
         trainer = self.create_trainer(
             train_df=train_df,
@@ -160,6 +168,9 @@ class NamedEntityModel():
             hp_space=space,
             n_trials=number_of_trials,
             compute_objective=get_f1_from_metrics,
+            storage=storage,
+            load_if_exists=load_if_exists,
+            study_name=study_name
         )
         return best_trial
 
