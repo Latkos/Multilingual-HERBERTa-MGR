@@ -11,6 +11,6 @@ def evaluate_with_division_between_column(model, test_df, column_name, average_t
     return evaluation_results
 
 def get_f1_from_metrics(metrics):
-    f1 = metrics["eval_overall_f1"]
+    f1 = metrics.get("eval_overall_f1", metrics.get("f1"))
     print(f"f1: {f1}")
     return f1
