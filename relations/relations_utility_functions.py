@@ -47,10 +47,10 @@ def map_result_to_text(result, model_path):
 def calculate_metrics(labels, predictions, average_type="micro"):
     precision, recall, f1, _ = precision_recall_fscore_support(labels, predictions, average=average_type)
     accuracy = accuracy_score(labels, predictions)
-    print(f"PRECISION: {round(precision,2)}")
-    print(f"RECALL: {round(recall,2)}")
-    print(f"F1 SCORE: {round(f1,2)}")
-    print(f"ACCURACY: {round(accuracy,2)}")
+    print(f"PRECISION: {round(precision,6)}")
+    print(f"RECALL: {round(recall, 6)}")
+    print(f"F1 SCORE: {round(f1, 6)}")
+    print(f"ACCURACY: {round(accuracy, 6)}")
     result = {"precision": precision, "accuracy": accuracy, "recall": recall, "f1": f1}
     return result
 
@@ -64,6 +64,7 @@ def compute_metrics(p):
     print(f"predictions after: {type(predictions)}  {predictions[0]} {predictions[1]}")
     results = metric.compute(predictions=predictions, references=labels, average="micro")
     return results
+
 
 def remove_tags_from_dataframe(df):
     tags = ['<e1>', '</e1>', '<e2>', '</e2>']

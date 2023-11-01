@@ -1,4 +1,7 @@
 import json
+
+import optuna
+
 from relations.relations_dataset import RelationsDataset
 from relations.relations_utility_functions import (
     prune_prefixes_from_labels,
@@ -13,9 +16,8 @@ from transformers import (
     BertForSequenceClassification,
     AutoTokenizer,
     TrainingArguments,
-    pipeline,
+    pipeline, AutoModelForSequenceClassification,
 )
-from base_model.base_model import BaseModel
 from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
 
@@ -33,15 +35,18 @@ class RelationsModel():
         training_arguments=None,
         split=0.2,
         config_path="./config/base_config.yaml",
+        remove_tags=True
     ):
         if model_path is None:
             model_path = self.model_path
+
         trainer = self.create_trainer(
             train_df=train_df,
             model_path=model_path,
             training_arguments=training_arguments,
             split=split,
             config_path=config_path,
+            remove_tags=remove_tags
         )
         trainer.train()
         trainer.save_model(model_path)
@@ -50,14 +55,17 @@ class RelationsModel():
         self,
         train_df,
         model_path,
+        config_path,
         training_arguments=None,
         split=0.2,
-        config_path="./config/base_config.yaml",
         model_init=None,
         remove_tags=True
     ):
-        if training_arguments is None:
-            training_arguments = get_training_args(config_path=config_path, model_type="re")
+        if training_arguments:
+            if config_path:
+                training_arguments = get_training_args(config_path=config_path, model_type="ner")
+            else:
+                training_arguments=None
         if remove_tags:
             train_df=remove_tags_from_dataframe(train_df)
         texts, labels = get_texts_and_labels(train_df, model_path)
@@ -70,9 +78,7 @@ class RelationsModel():
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        for sample in train_texts[:2]:
-            print(sample)
-        model = BertForSequenceClassification.from_pretrained(
+        model = AutoModelForSequenceClassification .from_pretrained(
             "bert-base-multilingual-cased", num_labels=labels_number
         ).to("cuda:0")
         not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
@@ -126,13 +132,20 @@ class RelationsModel():
         labels_number = len(map)
         return BertForSequenceClassification.from_pretrained(self.model_name, num_labels=labels_number).to("cuda:0")
 
+    def get_study_name(self,trial: optuna.Trial):
+        return f"{self.__class__.__name__}_{trial.number}"
+
     def perform_hyperparameter_search(
         self,
         space,
         train_df,
+        study_name,
         number_of_trials=50,
         model_path=None,
         config_path="./config/base_config.yaml",
+        storage='sqlite:///example.db',
+        load_if_exists=True,
+        remove_tags=False
     ):
         if model_path is None:
             model_path = self.model_path
@@ -141,6 +154,7 @@ class RelationsModel():
             model_path=model_path,
             config_path=config_path,
             model_init=self.model_init,
+            remove_tags=remove_tags
         )
         best_trial = trainer.hyperparameter_search(
             direction="maximize",
@@ -148,5 +162,8 @@ class RelationsModel():
             hp_space=space,
             n_trials=number_of_trials,
             compute_objective=get_f1_from_metrics,
+            storage=storage,
+            load_if_exists=load_if_exists,
+            study_name=study_name
         )
         return best_trial
