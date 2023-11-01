@@ -1,4 +1,7 @@
+import pickle
+
 import pandas as pd
+import torch
 
 
 def add_predictions_and_correctness_label_to_dataframe(model, test_df):
@@ -20,3 +23,22 @@ def predict_joint_models(test_df, ner_model, re_model,enhance_function):
     final_predictions["predicted_entity_2"] = [d["entity_2"] for d in ner_predictions]
     final_predictions["predicted_relation"] = re_prediction_result
     return final_predictions
+
+def save_results(filename, data):
+    with open(filename, 'wb') as fp:
+        pickle.dump(data, fp)
+
+def train_re_on_ner(ner_model, re_model, train_df, test_df, enhancement_func, results_file, read, model_path=None):
+    if read:
+        with open(results_file, 'rb') as file:
+            results = pickle.load(file)
+    else:
+        results = ner_model.predict(sentences=train_df['text'].tolist())
+        save_results(results_file, results)
+    enhanced_train_df = train_df.copy()
+    enhanced_input = enhancement_func(results)
+    enhanced_train_df['text'] = enhanced_input
+    re_model.train(train_df=train_df,model_path=model_path, remove_tags=False)
+    results = re_model.evaluate(df=test_df,model_path=model_path)
+    torch.cuda.empty_cache()
+    return results
