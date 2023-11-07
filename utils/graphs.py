@@ -1,5 +1,4 @@
 import pandas as pd
-from transformers import AutoTokenizer, pipeline
 import plotly.express as px
 
 
@@ -27,8 +26,8 @@ def plot_f1_depending_on_column(model, model_paths, test_df, col='lang', subset=
                     labels=dict(x=f"{col}", y="Models", color="F1 Score"),
                     color_continuous_scale='Viridis',
                     zmin=0.0, zmax=1.0)
-    fig.update_layout(title="F1 Scores for Models on Different Languages",
-                      xaxis_title="Languages",
+    fig.update_layout(title=f"F1 Scores for Models on Different {col}",
+                      xaxis_title=col,
                       yaxis_title="Models")
     fig.show()
     return fig
