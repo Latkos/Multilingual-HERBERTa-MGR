@@ -33,4 +33,6 @@ def read_optuna_logs(file_name):
     df = pd.DataFrame(combined_data)
     df["metric"] = df["metric"].astype(float)
     df["trial_runtime"] = df["trial_runtime"].astype(float)
+    df["trial_number"] = df["trial_number"].astype(int)
+    df['trial_number'] -= df['trial_number'].min()
     return df
