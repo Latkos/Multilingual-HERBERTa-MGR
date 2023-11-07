@@ -6,7 +6,7 @@ from transformers import (
     AutoModelForTokenClassification,
     Trainer,
     pipeline,
-    BertForTokenClassification,
+    BertForTokenClassification, EarlyStoppingCallback,
 )
 from config import general_config
 from named_entity.named_entity_utility_functions import (
@@ -32,10 +32,11 @@ class NamedEntityModel():
         training_arguments=None,
         split=0.2,
         config_path="./config/base_config.yaml",
+        early_stopping=True
     ):
         if model_path is None:
             model_path=self.model_path
-        trainer = self.create_trainer(train_df=train_df, training_arguments=training_arguments, split=split, config_path=config_path)
+        trainer = self.create_trainer(train_df=train_df, training_arguments=training_arguments, split=split, config_path=config_path, early_stopping=early_stopping)
         trainer.train()
         trainer.save_model(model_path)
 
@@ -46,6 +47,7 @@ class NamedEntityModel():
         training_arguments=None,
         split=0.2,
         model_init=None,
+        early_stopping=True
     ):
         training_args=None
         if not training_arguments:
@@ -60,6 +62,9 @@ class NamedEntityModel():
         if training_arguments:
             not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
             training_args = TrainingArguments(**not_none_params)
+        callbacks=None
+        if early_stopping:
+            callbacks=[EarlyStoppingCallback(1, 0.0)]
         trainer = Trainer(
             model=model,
             args=training_args,
@@ -69,6 +74,7 @@ class NamedEntityModel():
             tokenizer=self.tokenizer,
             compute_metrics=compute_metrics,
             model_init=model_init,
+            callbacks=callbacks
         )
         return trainer
 

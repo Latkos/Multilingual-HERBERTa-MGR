@@ -16,7 +16,7 @@ from transformers import (
     BertForSequenceClassification,
     AutoTokenizer,
     TrainingArguments,
-    pipeline, AutoModelForSequenceClassification,
+    pipeline, AutoModelForSequenceClassification, EarlyStoppingCallback,
 )
 from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
@@ -35,7 +35,8 @@ class RelationsModel():
         training_arguments=None,
         split=0.2,
         config_path="./config/base_config.yaml",
-        remove_tags=True
+        remove_tags=True,
+        early_stopping=True
     ):
         if model_path is None:
             model_path = self.model_path
@@ -46,7 +47,8 @@ class RelationsModel():
             training_arguments=training_arguments,
             split=split,
             config_path=config_path,
-            remove_tags=remove_tags
+            remove_tags=remove_tags,
+            early_stopping=early_stopping
         )
         trainer.train()
         trainer.save_model(model_path)
@@ -59,7 +61,8 @@ class RelationsModel():
         training_arguments=None,
         split=0.2,
         model_init=None,
-        remove_tags=True
+        remove_tags=True,
+        early_stopping=True
     ):
         training_args=None
         if not training_arguments:
@@ -83,6 +86,9 @@ class RelationsModel():
         if training_arguments:
             not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
             training_args = TrainingArguments(**not_none_params)
+        callbacks=None
+        if early_stopping:
+            callbacks=[EarlyStoppingCallback(1, 0.0)]
         trainer = Trainer(
             model=model,
             args=training_args,
@@ -90,6 +96,8 @@ class RelationsModel():
             eval_dataset=val_dataset,
             model_init=model_init,
             compute_metrics=compute_metrics,
+            callbacks=callbacks
+
         )
         return trainer
 
@@ -130,7 +138,7 @@ class RelationsModel():
         with open(f"{self.model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        return BertForSequenceClassification.from_pretrained(self.model_name, num_labels=labels_number).to("cuda:0")
+        return BertForSequenceClassification.from_pretrained(self.model_type, num_labels=labels_number).to("cuda:0")
 
     def get_study_name(self,trial: optuna.Trial):
         return f"{self.__class__.__name__}_{trial.number}"
