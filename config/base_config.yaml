@@ -1,28 +1,30 @@
 train:
-  # picked trial 1
   ner:
     output_dir: "ner"
-    save_strategy: "no"
+    evaluation_strategy: "epoch"
+    save_strategy: "epoch"
+    save_total_limit: 6
     per_device_train_batch_size: 16
     per_device_eval_batch_size: 16
-    num_train_epochs: 2
-    warmup_ratio: 0.111
-    weight_decay: 0.187
-    learning_rate: 8.016e-05
-    logging_steps: 10000
+    num_train_epochs: 6
+    warmup_ratio: 0.0
+    weight_decay: 0.0
+    learning_rate: 5.0e-05
     load_best_model_at_end: True
+    metric_for_best_model: "overall_f1"
     report_to: "wandb"
 
-  re: # picked trial 1
+  re:
     output_dir: "re"
-    per_device_train_batch_size: 12
-    per_device_eval_batch_size: 12
-    save_total_limit: 1
-    logging_steps: 10000
-    save_strategy: "no"
-    learning_rate: 4.534e-05
-    num_train_epochs: 1
-    warmup_ratio: 0.030
-    weight_decay: 0.067
+    evaluation_strategy: "epoch"
+    save_strategy: "epoch"
+    save_total_limit: 6
+    per_device_train_batch_size: 16
+    per_device_eval_batch_size: 16
+    learning_rate: 5.0e-05
+    num_train_epochs: 6
+    warmup_ratio: 0.0
+    weight_decay: 0.0
+    load_best_model_at_end: True
+    metric_for_best_model: "f1"
     report_to: "wandb"
-
