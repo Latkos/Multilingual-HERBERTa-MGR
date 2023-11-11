@@ -67,7 +67,7 @@ class RelationsModel():
         training_args=None
         if not training_arguments:
             if config_path:
-                training_arguments = get_training_args(config_path=config_path, model_type="ner")
+                training_arguments = get_training_args(config_path=config_path, model_type="re")
         if remove_tags:
             train_df=remove_tags_from_dataframe(train_df)
         texts, labels = get_texts_and_labels(train_df, model_path)
