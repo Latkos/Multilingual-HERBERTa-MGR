@@ -4,6 +4,7 @@ import torch
 from named_entity.named_entity_model import NamedEntityModel
 from relations.relations_model import RelationsModel
 from utils.enhancement import enhance_with_brackets
+from utils.overlap import remove_overlapping_entities
 from utils.preprocessing import filter_out_wrong_data
 
 
@@ -224,3 +225,23 @@ def run_experiments_linguistic():
     )
 
     # Lexical Overlap
+    perform_four_variations_linguistic(
+        ["fr"], ["it"], ner_model, re_model, enhance_function=enhance_with_brackets, average_type="micro"
+    )
+    # We do not call perform_four_variations_linguistic here, because we need to filter out overlapping entities
+    # And because we are only interested in zero-shot scenario, few-shot does not make much sense here and the rest will not change
+
+    train_df=pd.read_csv('../data/fr_corpora_train.tsv',sep='\t')
+    test_df=pd.read_csv('../data/it_corpora_test.tsv',sep='\t')
+    train_df=remove_overlapping_entities(train_df,test_df)
+    train_and_evaluate_on_language_subsets(
+        train_df,
+        test_df,
+        ner_model,
+        re_model,
+        enhance_function=enhance_with_brackets,
+        average_type='micro',
+    )
+
+
+
