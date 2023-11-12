@@ -1,5 +1,11 @@
 import pandas as pd
 
+def remove_overlapping_entities(first_df, second_df):
+    overlapping_entities = set(second_df['entity_1']).union(set(second_df['entity_2']))
+    filtered_df = first_df[~(first_df['entity_1'].isin(overlapping_entities) | first_df['entity_2'].isin(overlapping_entities))]
+    return filtered_df
+
+
 def compute_overlap(entity_dict):
     overlap_percentages = {}
     languages = list(entity_dict.keys())
