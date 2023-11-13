@@ -82,7 +82,6 @@ nltk
 notebook
 notebook_shim
 numpy
-nvidia-pyindex
 optuna
 packaging
 pandas
@@ -94,6 +93,7 @@ pickleshare
 Pillow
 pkgutil_resolve_name
 platformdirs
+plotly
 poetry-semver
 prometheus-client
 prompt-toolkit
@@ -151,10 +151,12 @@ tornado
 tqdm
 traitlets
 transformers
+transformers[torch]
 typing_extensions
 uri-template
 urllib3
 wcwidth
+wandb
 webcolors
 webencodings
 websocket-client
