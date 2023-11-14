@@ -2,7 +2,7 @@ import pickle
 
 import pandas as pd
 import torch
-
+from relations.relations_utility_functions import remove_tags_from_dataframe
 
 def add_predictions_and_correctness_label_to_dataframe(model, test_df):
     original_entities_df = test_df.reset_index()
@@ -43,7 +43,17 @@ def train_re_on_ner(ner_model, re_model, train_df, test_df, enhancement_func, re
     enhanced_train_df = train_df.copy()
     enhanced_input = enhancement_func(results)
     enhanced_train_df['text'] = enhanced_input
-    re_model.train(train_df=train_df, model_path=model_path, remove_tags=False)
-    results = re_model.evaluate(df=test_df, model_path=model_path)
+    print(train_df['text'].head(5))
+    print("*************************")
+    print(enhanced_train_df['text'].head(5))
+    print("*************************")
+    enhanced_test_df = test_df.copy()
+    enhanced_test_df = remove_tags_from_dataframe(enhanced_test_df)  
+    enhancement_input = [{'text': text} for text in enhanced_test_df['text'].tolist()]
+    enhancement_test=enhancement_func(enhancement_input)
+    enhanced_test_df['text'] = enhancement_test
+    display(enhanced_test_df['text'].sample(n=5))
+    re_model.train(train_df=enhanced_train_df, model_path=model_path, remove_tags=False)
+    results = re_model.evaluate(df=enhanced_test_df, model_path=model_path)
     torch.cuda.empty_cache()
     return results
