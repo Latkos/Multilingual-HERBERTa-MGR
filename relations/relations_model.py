@@ -20,7 +20,7 @@ from transformers import (
 )
 from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
-
+from utils.enhancement import enhance_with_brackets
 
 class RelationsModel():
     def __init__(self, model_path="./re", model_type="bert-base-multilingual-cased"):
@@ -101,10 +101,15 @@ class RelationsModel():
         )
         return trainer
 
-    def evaluate(self, df, model_path=None, average_type="micro"):
+    def evaluate(self, df, model_path=None, average_type="micro", enhancement_func=enhance_with_brackets):
         if model_path is None:
             model_path = self.model_path
-        texts, labels = get_texts_and_labels(df, model_path, read=True)
+        enhanced_test_df = df.copy()
+        enhanced_test_df = remove_tags_from_dataframe(enhanced_test_df)
+        enhancement_input = enhanced_test_df[['text', 'entity_1', 'entity_2']].to_dict(orient='records')
+        enhancement_test = enhancement_func(enhancement_input)
+        enhanced_test_df['text'] = enhancement_test
+        texts, labels = get_texts_and_labels(enhanced_test_df, model_path, read=True)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)

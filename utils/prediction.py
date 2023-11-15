@@ -47,13 +47,7 @@ def train_re_on_ner(ner_model, re_model, train_df, test_df, enhancement_func, re
     print("*************************")
     print(enhanced_train_df['text'].head(5))
     print("*************************")
-    enhanced_test_df = test_df.copy()
-    enhanced_test_df = remove_tags_from_dataframe(enhanced_test_df)  
-    enhancement_input = [{'text': text} for text in enhanced_test_df['text'].tolist()]
-    enhancement_test=enhancement_func(enhancement_input)
-    enhanced_test_df['text'] = enhancement_test
-    display(enhanced_test_df['text'].sample(n=5))
     re_model.train(train_df=enhanced_train_df, model_path=model_path, remove_tags=False)
-    results = re_model.evaluate(df=enhanced_test_df, model_path=model_path)
+    results = re_model.evaluate(df=test_df, model_path=model_path, enhancement_func=enhancement_func)
     torch.cuda.empty_cache()
     return results
