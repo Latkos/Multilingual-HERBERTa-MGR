@@ -35,7 +35,6 @@ def test_hyperparameters_impact(model, train_df, test_df):
         "weight_decay": 0.0,
         "learning_rate": 5e-5,
         "load_best_model_at_end": True,
-        "metric_for_best_model": "overall_f1",
         "report_to": "wandb",
     }
     hyperparameter_grid = {
@@ -47,6 +46,7 @@ def test_hyperparameters_impact(model, train_df, test_df):
     results = []
     for hyperparam, values in hyperparameter_grid.items():
         for value in values:
+            print(f"Hyperparameter {hyperparam}, value {value}")
             hyperparams = default_hyperparams.copy()
             hyperparams[hyperparam] = value
             training_arguments = TrainingArguments(**hyperparams)

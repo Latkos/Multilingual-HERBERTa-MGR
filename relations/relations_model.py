@@ -109,6 +109,7 @@ class RelationsModel():
         enhancement_input = enhanced_test_df[['text', 'entity_1', 'entity_2']].to_dict(orient='records')
         enhancement_test = enhancement_func(enhancement_input)
         enhanced_test_df['text'] = enhancement_test
+        print(enhanced_test_df['text'].sample(n=5))
         texts, labels = get_texts_and_labels(enhanced_test_df, model_path, read=True)
         tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
         with open(f"{model_path}/map.json") as map_file:

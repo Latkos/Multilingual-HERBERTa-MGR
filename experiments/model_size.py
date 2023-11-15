@@ -4,6 +4,8 @@ import shutil
 import pandas as pd
 import torch
 
+from utils.enhancement import enhance_with_brackets
+
 
 def test_ner_quality_depending_on_dataset_size(
     model, train_df, test_df, sizes, random_state=None, delete_after_training=True
@@ -28,7 +30,7 @@ def test_ner_quality_depending_on_dataset_size(
 
 
 def test_re_quality_depending_on_dataset_size(
-    model, train_df, test_df, sizes, random_state=None, delete_after_training=True, remove_tags=False
+    model, train_df, test_df, sizes, random_state=None, delete_after_training=True, remove_tags=False, enhancement_func=enhance_with_brackets
 ):
     results = []
     for size in sizes:
@@ -42,7 +44,7 @@ def test_re_quality_depending_on_dataset_size(
         torch.cuda.empty_cache()
         test_df_filtered = test_df.copy()
         test_df_filtered = test_df_filtered[test_df_filtered["label"].isin(sampled_train_df["label"].unique())]
-        evaluation_result = model.evaluate(test_df_filtered, model_path)
+        evaluation_result = model.evaluate(df=test_df_filtered, model_path=model_path, enhancement_func=enhancement_func)
         f1 = evaluation_result["f1"]
         results.append({"size": size, "f1": f1})
         if delete_after_training:
