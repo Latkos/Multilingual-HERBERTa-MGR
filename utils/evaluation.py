@@ -11,7 +11,7 @@ def evaluate_with_division_between_column(model, test_df, column_name, average_t
         print(f"{column_name}: {unique_value}")
         subset_df = test_df[test_df[column_name] == unique_value]
         evaluation_results[unique_value] = model.evaluate(
-            test_df=subset_df, average_type=average_type
+            df=subset_df, average_type=average_type
         )
     df = pd.DataFrame(list(evaluation_results.items()), columns=['relation', 'f1'])
     return df
@@ -21,9 +21,6 @@ def get_f1_from_metrics(metrics):
     if f1 is None:
         f1 = metrics["eval_f1"]
     return f1
-
-
-
 
 def evaluate_joint_models(file_path, ner_model, re_model, enhance_function):
     test_df = pd.read_csv(file_path, sep='\t')

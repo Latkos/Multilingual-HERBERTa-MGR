@@ -88,12 +88,12 @@ def perform_four_variations_linguistic(
     )
     # multilingual
     multilingual_ner = NamedEntityModel(model_path="models/base_ner")
-    multilingual_re = RelationsModel(model_path="models/base_re")
+    multilingual_re = RelationsModel(model_path="models/re_brackets")
     train_df, test_df = create_datasets_from_language_lists(
         training_languages, testing_languages, downsample_number=None
     )
     multilingual_ner_result = multilingual_ner.evaluate(model_path="models/base_ner", df=test_df)
-    multilingual_re_result = multilingual_re.evaluate(model_path="models/base_re", df=test_df)
+    multilingual_re_result = multilingual_re.evaluate(model_path="models/re_brackets", df=test_df)
     multilingual_results = {
         "training_languages": "all",
         "testing_languages": testing_languages,
@@ -107,8 +107,8 @@ def perform_four_variations_linguistic(
 
 
 def create_datasets_from_language_lists(training_languages, testing_languages, downsample_number=None):
-    training_files = [f"{lang}_corpora_train.tsv" for lang in training_languages]
-    testing_files = [f"{lang}_corpora_test.tsv" for lang in testing_languages]
+    training_files = [f"data/{lang}_corpora_train.tsv" for lang in training_languages]
+    testing_files = [f"data/{lang}_corpora_test.tsv" for lang in testing_languages]
     train_dfs = [pd.read_csv(file, sep="\t") for file in training_files]
     test_dfs = [pd.read_csv(file, sep="\t") for file in testing_files]
     train_df = pd.concat(train_dfs, ignore_index=True)

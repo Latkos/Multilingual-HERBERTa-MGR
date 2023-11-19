@@ -6,11 +6,11 @@ from utils.prediction import train_re_on_ner, save_results
 def test_enhancing_text_used_to_train_re(train_df, test_df, ner_model, re_model,results_file='results_optimized_ner.txt',read=True, train_ner=False):
     enhancements = [
         # ("brackets", enhance_with_brackets),
-        ("no_enhance", enhance_with_nothing),
-        ("entity", enhance_with_entity),
+        # ("no_enhance", enhance_with_nothing),
+         # ("entity_only", enhance_entities_only),
+        # ("entity_with_special_characters", enhance_with_special_characters),
+        # ("entity", enhance_with_entity),     
         ("entity_differentiated", enhance_with_entity_differentiated),
-        ("entity_with_special_characters", enhance_with_special_characters),
-        ("entity_only", enhance_entities_only)
     ]
     if train_ner:
         print("Commencing NER training")

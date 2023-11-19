@@ -1,52 +1,50 @@
-def enhance_with_nothing(ner_predictions):
-    text = []
-    for prediction in ner_predictions:
-        text.append(prediction["text"])
-    return text
+import re
 
-def enhance_with_entity_differentiated(ner_predictions):
+def extract_and_replace(text, tag, replacement):
+    pattern = re.compile(f"{re.escape(tag)}(.*?){re.escape(tag[0] + '/' + tag[1:])}")
+    return pattern.sub(replacement, text)
+
+def enhance_with_nothing(predictions):
     enhanced_text = []
-    for prediction in ner_predictions:
-        if prediction["entity_1"]!="":
-            prediction["text"]=prediction["text"].replace(prediction["entity_1"],"Entity1")
-        if prediction["entity_2"]!="":
-            prediction["text"]=prediction["text"].replace(prediction["entity_2"],"Entity2")
-        enhanced_text.append(prediction["text"])
+    for prediction in predictions:
+        text = prediction['text'].replace('<e1>', '')
+        text = text.replace('</e1>', '')
+        text = text.replace('<e2>', '')
+        text = text.replace('</e2>', '')
+        enhanced_text.append(text)
     return enhanced_text
 
-def enhance_with_brackets(ner_predictions):
+def enhance_with_entity_differentiated(predictions):
     enhanced_text = []
-    for prediction in ner_predictions:
-        if prediction["entity_1"]!="":
-            prediction["text"]=prediction["text"].replace(prediction["entity_1"],f"<e1>{prediction['entity_1']}</e1>")
-        if prediction["entity_2"]!="":
-            prediction["text"]=prediction["text"].replace(prediction["entity_2"],f"<e2>{prediction['entity_2']}</e2>")
-        enhanced_text.append(prediction["text"])
+    for prediction in predictions:
+        text = extract_and_replace(extract_and_replace(prediction['text'], "<e1>", "Entity1"), "<e2>", "Entity2")
+        enhanced_text.append(text)
     return enhanced_text
 
-def enhance_with_entity(ner_predictions):
+def enhance_with_brackets(predictions):
     enhanced_text = []
-    for prediction in ner_predictions:
-        if prediction["entity_1"]!="":
-            prediction["text"]=prediction["text"].replace(prediction["entity_1"],"Entity")
-        if prediction["entity_2"]!="":
-            prediction["text"]=prediction["text"].replace(prediction["entity_2"],"Entity")
-        enhanced_text.append(prediction["text"])
+    for prediction in predictions:
+        text = extract_and_replace(extract_and_replace(prediction['text'], "<e1>", lambda m: f"<e1>{m.group(1)}</e1>"), "<e2>", lambda m: f"<e2>{m.group(1)}</e2>")
+        enhanced_text.append(text)
     return enhanced_text
 
-def enhance_with_special_characters (ner_predictions):
+def enhance_with_entity(predictions):
     enhanced_text = []
-    for prediction in ner_predictions:
-        if prediction["entity_1"]!="":
-            prediction["text"]=prediction["text"].replace(prediction["entity_1"],f"${prediction['entity_1']}$")
-        if prediction["entity_2"]!="":
-            prediction["text"]=prediction["text"].replace(prediction["entity_2"],f"#{prediction['entity_2']}#")
-        enhanced_text.append(prediction["text"])
+    for prediction in predictions:
+        text = extract_and_replace(extract_and_replace(prediction['text'], "<e1>", "Entity"), "<e2>", "Entity")
+        enhanced_text.append(text)
+    return enhanced_text
+
+def enhance_with_special_characters(predictions):
+    enhanced_text = []
+    for prediction in predictions:
+        text = extract_and_replace(extract_and_replace(prediction['text'], "<e1>", lambda m: f"${m.group(1)}$"), "<e2>", lambda m: f"#{m.group(1)}#")
+        enhanced_text.append(text)
     return enhanced_text
 
 def enhance_entities_only(ner_predictions):
     enhanced_text = []
     for prediction in ner_predictions:
-        prediction["text"] = f"{prediction['entity_1']} {prediction['entity_2']}"
-        enhanced_text.append(prediction["text"])
+        text = f"{prediction['entity_1']} # {prediction['entity_2']}"
+        enhanced_text.append(text)
     return enhanced_text

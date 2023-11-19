@@ -1,5 +1,4 @@
 import re
-
 import nltk
 from datasets import Dataset, load_metric
 import numpy as np
@@ -87,45 +86,45 @@ def compute_metrics(p):
             flattened_results[k + "_f1"] = results[k]["f1"]
     return flattened_results
 
-
 def compute_objective(p):
     result = compute_metrics(p)
     return result["overall_f1"]
 
-
 def get_unlabeled_text(sentence):
     return {"entity_1": "", "entity_2": "", "text": sentence}
 
-
 def get_model_output_as_sentence(ner_output, sentence):
-    entity_1 = ""
-    entity_2 = ""
-    if not next((item for item in ner_output if item["entity_group"] == "LABEL_1"), False):
-        # print("Cannot parse output as sentence, missing entity 1, generating text without entity labelling instead")
-        return get_unlabeled_text(sentence)
-    if not next((item for item in ner_output if item["entity_group"] == "LABEL_3"), False):
-        # print("Cannot parse output as sentence, missing entity 2, generating text without entity labelling instead")
-        return get_unlabeled_text(sentence)
-    for item in ner_output:
-        if item["entity_group"] == "LABEL_1":
-            entity_1 += item["word"]
-        if item["entity_group"] == "LABEL_2":
-            entity_1 += " "
-            entity_1 += item["word"]
-        if item["entity_group"] == "LABEL_3":
-            entity_2 += item["word"]
-        if item["entity_group"] == "LABEL_4":
-            entity_2+= " "
-            entity_2 += item["word"]
-    punctuation_marks = [';', ',', '.', ':', '!', '?']
-    pattern = r'\s*([' + ''.join(re.escape(p) for p in punctuation_marks) + r'])'
-    entity_1 = re.sub(pattern, r'\1 ', entity_1)
-    entity_2 = re.sub(pattern, r'\1 ', entity_2)
-    entity_1=entity_1.strip()
-    entity_2=entity_2.strip()
-    entity_1=" ".join(entity_1.split())
-    entity_2=" ".join(entity_2.split())
-    result = {"entity_1": entity_1, "entity_2": entity_2, "text": sentence}
-    return result
+    # Initialize variables for entity tracking
+    entity_1_start, entity_1_end, entity_2_start, entity_2_end = None, None, None, None
+    entity_1, entity_2 = "", ""
+    offset = 0
 
+    for item in ner_output:
+        # Check for LABEL_1 and LABEL_2 (Entity 1)
+        if item["entity_group"] in ["LABEL_1", "LABEL_2"]:
+            if entity_1_start is None:
+                entity_1_start = item["start"]
+            entity_1_end = item["end"]
+            entity_1 += item["word"] + " "
+        # Check for LABEL_3 and LABEL_4 (Entity 2)
+        elif item["entity_group"] in ["LABEL_3", "LABEL_4"]:
+            if entity_2_start is None:
+                entity_2_start = item["start"]
+            entity_2_end = item["end"]
+            entity_2 += item["word"] + " "
+
+    # Add tags for Entity 1
+    if entity_1_start is not None:
+        sentence = sentence[:entity_1_start + offset] + "<e1>" + sentence[entity_1_start + offset:entity_1_end + offset] + "</e1>" + sentence[entity_1_end + offset:]
+        offset += 9  # Length of <e1></e1>
+
+    # Add tags for Entity 2
+    if entity_2_start is not None:
+        sentence = sentence[:entity_2_start + offset] + "<e2>" + sentence[entity_2_start + offset:entity_2_end + offset] + "</e2>" + sentence[entity_2_end + offset:]
+        offset += 9  # Length of <e2></e2>
+
+    return {"entity_1": entity_1.strip(), "entity_2": entity_2.strip(), "text": sentence}
+
+# Example usage:
+# result = get_model_output_as_sentence(ner_output, sentence)
 

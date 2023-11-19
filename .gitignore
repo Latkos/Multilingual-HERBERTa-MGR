@@ -11,3 +11,4 @@ wandb
 .df
 .ipynb_checkpoints
 results
+__pycache__
