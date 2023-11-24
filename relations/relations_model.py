@@ -8,12 +8,11 @@ from relations.relations_utility_functions import (
     map_result_to_text,
     calculate_metrics,
     get_texts_and_labels,
-    compute_metrics, remove_tags_from_dataframe,
+    compute_metrics, remove_tags_from_dataframe
 )
 from sklearn.model_selection import train_test_split
 from transformers import (
     Trainer,
-    BertForSequenceClassification,
     AutoTokenizer,
     TrainingArguments,
     pipeline, AutoModelForSequenceClassification, EarlyStoppingCallback,
@@ -21,6 +20,7 @@ from transformers import (
 from utils.config_parser import get_training_args
 from utils.evaluation import get_f1_from_metrics
 from utils.enhancement import enhance_with_brackets
+
 
 class RelationsModel():
     def __init__(self, model_path="./re", model_type="bert-base-multilingual-cased"):
@@ -72,7 +72,7 @@ class RelationsModel():
             train_df=remove_tags_from_dataframe(train_df)
         texts, labels = get_texts_and_labels(train_df, model_path)
         train_texts, val_texts, train_labels, val_labels = train_test_split(texts, labels, test_size=split)
-        tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
+        tokenizer = AutoTokenizer.from_pretrained(self.model_type)
         train_encodings = tokenizer(train_texts, truncation=True, padding=True)
         val_encodings = tokenizer(val_texts, truncation=True, padding=True)
         train_dataset = RelationsDataset(train_encodings, train_labels)
@@ -80,8 +80,8 @@ class RelationsModel():
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        model = AutoModelForSequenceClassification .from_pretrained(
-            "bert-base-multilingual-cased", num_labels=labels_number
+        model = AutoModelForSequenceClassification.from_pretrained(
+            self.model_type, num_labels=labels_number
         ).to("cuda:0")
         if training_arguments:
             not_none_params = {k: v for k, v in training_arguments.items() if v is not None}
@@ -97,7 +97,6 @@ class RelationsModel():
             model_init=model_init,
             compute_metrics=compute_metrics,
             callbacks=callbacks
-
         )
         return trainer
 
@@ -105,17 +104,15 @@ class RelationsModel():
         if model_path is None:
             model_path = self.model_path
         enhanced_test_df = df.copy()
-        enhanced_test_df = remove_tags_from_dataframe(enhanced_test_df)
         enhancement_input = enhanced_test_df[['text', 'entity_1', 'entity_2']].to_dict(orient='records')
         enhancement_test = enhancement_func(enhancement_input)
         enhanced_test_df['text'] = enhancement_test
-        print(enhanced_test_df['text'].sample(n=5))
         texts, labels = get_texts_and_labels(enhanced_test_df, model_path, read=True)
-        tokenizer = AutoTokenizer.from_pretrained("bert-base-multilingual-cased")
+        tokenizer = AutoTokenizer.from_pretrained(self.model_type)
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        model = BertForSequenceClassification.from_pretrained(model_path, num_labels=labels_number).to("cuda:0")
+        model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=labels_number).to("cuda:0")
         generator = pipeline(task="text-classification", model=model, tokenizer=tokenizer, device=0)
         predicted_test_labels = generator(texts)
         predicted_test_labels = prune_prefixes_from_labels(predicted_test_labels)
@@ -132,9 +129,8 @@ class RelationsModel():
         with open(f"{model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        model = BertForSequenceClassification.from_pretrained(model_path, num_labels=labels_number).to("cuda:0")
+        model = AutoModelForSequenceClassification.from_pretrained(model_path, num_labels=labels_number).to("cuda:0")
         generator = pipeline(task="text-classification", model=model, tokenizer=self.tokenizer, device=0)
-        # TODO: check how will it work if we cast predict on a previously trained model
         predicted_labels = generator(sentences)
         predicted_numeric_labels = prune_prefixes_from_labels(predicted_labels)
         result = map_result_to_text(predicted_numeric_labels, model_path)
@@ -144,7 +140,7 @@ class RelationsModel():
         with open(f"{self.model_path}/map.json") as map_file:
             map = json.load(map_file)
         labels_number = len(map)
-        return BertForSequenceClassification.from_pretrained(self.model_type, num_labels=labels_number).to("cuda:0")
+        return AutoModelForSequenceClassification.from_pretrained(self.model_type, num_labels=labels_number).to("cuda:0")
 
     def get_study_name(self,trial: optuna.Trial):
         return f"{self.__class__.__name__}_{trial.number}"
