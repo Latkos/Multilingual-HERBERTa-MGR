@@ -49,10 +49,9 @@ def test_hyperparameters_impact(model, train_df, test_df):
             print(f"Hyperparameter {hyperparam}, value {value}")
             hyperparams = default_hyperparams.copy()
             hyperparams[hyperparam] = value
-            training_arguments = TrainingArguments(**hyperparams)
-            model.train(train_df=train_df, training_arguments=training_arguments)
+            model.train(train_df=train_df, training_arguments=hyperparams)
             eval_result = model.evaluate(df=test_df)
-            results = results.append({"Hyperparameter": hyperparam, "Value": value, "Evaluation Result": eval_result})
+            results.append({"Hyperparameter": hyperparam, "Value": value, "Evaluation Result": eval_result})
     print(results)
     results_df = pd.DataFrame(results)
     return results_df
