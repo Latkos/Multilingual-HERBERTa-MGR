@@ -4,16 +4,20 @@ from sklearn.metrics import f1_score
 from utils.prediction import predict_joint_models
 
 
-def evaluate_with_division_between_column(model, test_df, column_name, average_type="micro"):
+def evaluate_with_division_between_column(model, test_df, column_name):
     print(f"Evaluating with division between {column_name} ")
     evaluation_results = {}
     for unique_value in test_df[column_name].unique():
         print(f"{column_name}: {unique_value}")
         subset_df = test_df[test_df[column_name] == unique_value]
-        evaluation_results[unique_value] = model.evaluate(
-            df=subset_df, average_type=average_type
+        result=model.evaluate(
+            df=subset_df
         )
-    df = pd.DataFrame(list(evaluation_results.items()), columns=['relation', 'f1'])
+        f1_key='f1'
+        if 'eval_overall_f1' in result.keys():
+            f1_key="eval_overall_f1"
+        evaluation_results[unique_value] = result[f1_key]
+    df = pd.DataFrame(list(evaluation_results.items()), columns=[column_name, 'f1'])
     return df
 
 def get_f1_from_metrics(metrics):
