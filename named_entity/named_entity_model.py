@@ -5,8 +5,7 @@ from transformers import (
     TrainingArguments,
     AutoModelForTokenClassification,
     Trainer,
-    pipeline,
-    BertForTokenClassification, EarlyStoppingCallback,
+    pipeline, EarlyStoppingCallback,
 )
 from config import general_config
 from named_entity.named_entity_utility_functions import (
