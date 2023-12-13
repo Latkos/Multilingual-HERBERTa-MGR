@@ -17,11 +17,11 @@ def predict_joint_models(test_df, ner_model, re_model, enhance_function):
     final_predictions = test_df.copy()
     sentences = test_df["text"].tolist()
     ner_predictions = ner_model.predict(sentences=sentences)
-    text = enhance_function(ner_predictions)
-    re_prediction_result = re_model.predict(sentences=text)
+    enhanced_ner_predictions = enhance_function(ner_predictions)
+    re_prediction_result = re_model.predict(sentences=enhanced_ner_predictions)
     final_predictions["predicted_entity_1"] = [d["entity_1"] for d in ner_predictions]
     final_predictions["predicted_entity_2"] = [d["entity_2"] for d in ner_predictions]
-    final_predictions["predicted_relation"] = re_prediction_result
+    final_predictions["predicted_label"] = re_prediction_result
     return final_predictions
 
 
@@ -43,10 +43,6 @@ def train_re_on_ner(ner_model, re_model, train_df, test_df, enhancement_func, re
     enhanced_train_df = train_df.copy()
     enhanced_input = enhancement_func(results)
     enhanced_train_df['text'] = enhanced_input
-    print(train_df['text'].head(5))
-    print("*************************")
-    print(enhanced_train_df['text'].head(5))
-    print("*************************")
     re_model.train(train_df=enhanced_train_df, model_path=model_path, remove_tags=False)
     results = re_model.evaluate(df=test_df, model_path=model_path, enhancement_func=enhancement_func)
     torch.cuda.empty_cache()
