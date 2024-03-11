@@ -1,0 +1,14 @@
+.idea
+.vscode
+venv
+local_testing
+data
+models
+training_output
+wandb
+.tsv
+.csv
+.df
+.ipynb_checkpoints
+results
+__pycache__
